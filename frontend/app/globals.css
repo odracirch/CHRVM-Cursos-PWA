@@ -1,0 +1,2 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+:root{color-scheme:light} body{margin:0;background:#f8fafc;color:#0f172a;font-family:Arial,Helvetica,sans-serif} button,input,select,textarea{font:inherit}.card{background:white;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 4px 20px rgba(15,23,42,.05)}

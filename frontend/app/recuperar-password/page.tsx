@@ -1,0 +1,1 @@
+export default function Page(){return <div className="max-w-md mx-auto px-4 py-14"><div className="card p-7"><h1 className="text-2xl font-black">Recuperar contraseña</h1><p className="text-slate-600 mt-3">La infraestructura está preparada para integrar envío de correo. En desarrollo, utiliza el panel administrativo para restablecer contraseñas de forma segura.</p></div></div>}

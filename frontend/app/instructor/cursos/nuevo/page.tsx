@@ -1,0 +1,2 @@
+import AuthGuard from '@/components/AuthGuard';
+export default function Page(){return <AuthGuard roles={['instructor', 'admin']}><div className="max-w-6xl mx-auto px-4 py-10"><div className="card p-7"><h1 className="text-3xl font-black">Instructor · Cursos · Nuevo</h1><p className="text-slate-600 mt-3">Panel protegido de CHRVM Cursos. Esta vista consume los endpoints REST correspondientes y está preparada para administración por rol.</p></div></div></AuthGuard>}

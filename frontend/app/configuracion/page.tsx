@@ -1,0 +1,2 @@
+import AuthGuard from '@/components/AuthGuard';
+export default function Page(){return <AuthGuard roles={['student', 'instructor', 'admin']}><div className="max-w-5xl mx-auto px-4 py-12"><div className="card p-8"><h1 className="text-3xl font-black">Configuración</h1><p className="text-slate-600 mt-3">Preferencias de cuenta y seguridad.</p></div></div></AuthGuard>}

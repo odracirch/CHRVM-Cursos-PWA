@@ -1,7 +1,7 @@
-import EnrollButton from '@/components/EnrollButton'
-
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import EnrollButton from '@/components/EnrollButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,30 +14,33 @@ export default async function CursoPage({
 
   const { data: curso, error } = await supabase
     .from('courses')
-    .select('id, title, slug, description, image_url, published')
+    .select('*')
     .eq('slug', slug)
     .eq('published', true)
     .single()
 
   if (error || !curso) {
-    return (
-      <main className="max-w-4xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-black">
-          Curso no encontrado
-        </h1>
-
-        <Link
-          href="/cursos"
-          className="inline-block bg-blue-600 text-white px-5 py-3 rounded-xl mt-6"
-        >
-          Volver a cursos
-        </Link>
-      </main>
-    )
+    notFound()
   }
+
+  const { data: modulos } = await supabase
+    .from('modules')
+    .select(`
+      id,
+      title,
+      position,
+      lessons (
+        id,
+        title,
+        position
+      )
+    `)
+    .eq('course_id', curso.id)
+    .order('position')
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">
+
       <Link
         href="/cursos"
         className="text-blue-600 font-semibold"
@@ -45,64 +48,77 @@ export default async function CursoPage({
         ← Volver a cursos
       </Link>
 
-      <div className="mt-6 bg-slate-950 text-white rounded-3xl overflow-hidden">
-        {curso.image_url && (
-          <img
-            src={curso.image_url}
-            alt={curso.title}
-            className="w-full h-64 object-cover"
-          />
-        )}
+      <section className="mt-6 bg-slate-950 text-white rounded-3xl p-8 md:p-12">
 
-        <div className="p-8 md:p-12">
-          <span className="text-blue-400 font-semibold">
-            Curso
-          </span>
+        <span className="text-blue-400 font-semibold">
+          Curso
+        </span>
 
-          <h1 className="text-4xl md:text-5xl font-black mt-3">
-            {curso.title}
-          </h1>
+        <h1 className="text-4xl md:text-5xl font-black mt-3">
+          {curso.title}
+        </h1>
 
-          <p className="text-slate-300 text-lg mt-5">
-            {curso.description}
-          </p>
-
-          <Link
-            href={`/curso/${curso.id}`}
-            className="inline-block bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-semibold mt-8"
-          >
-            Ver contenido del curso
-          </Link>
-<EnrollButton courseId={curso.id} />
-        </div>
-      </div>
-
-      <div className="bg-slate-100 rounded-2xl p-6 mt-10">
-        <h2 className="font-bold text-xl">
-          ¿Quieres comenzar este curso?
-        </h2>
-
-        <p className="text-slate-600 mt-2">
-          Inicia sesión o crea una cuenta para poder inscribirte
-          y guardar tu progreso.
+        <p className="text-slate-300 text-lg mt-5">
+          {curso.description}
         </p>
 
-        <div className="flex flex-wrap gap-3 mt-5">
-          <Link
-            href={`/login?redirect=/cursos/${curso.slug}`}
-            className="bg-blue-600 text-white px-5 py-3 rounded-xl font-semibold"
-          >
-            Iniciar sesión
-          </Link>
+        <EnrollButton courseId={curso.id} />
 
-          <Link
-            href="/registro"
-            className="border border-slate-300 bg-white px-5 py-3 rounded-xl font-semibold"
-          >
-            Crear cuenta
-          </Link>
-        </div>
-      </div>
+      </section>
+
+      <section className="mt-10">
+
+        <h2 className="text-3xl font-black">
+          Contenido del curso
+        </h2>
+
+        {modulos && modulos.length > 0 ? (
+          <div className="mt-6 space-y-6">
+
+            {modulos.map((modulo) => (
+              <div
+                key={modulo.id}
+                className="border border-slate-200 rounded-2xl bg-white overflow-hidden"
+              >
+
+                <div className="bg-slate-100 px-6 py-4">
+                  <h3 className="text-xl font-bold">
+                    {modulo.title}
+                  </h3>
+                </div>
+
+                <div className="p-4 space-y-2">
+
+                  {modulo.lessons
+                    ?.sort((a, b) => a.position - b.position)
+                    .map((lesson) => (
+                      <Link
+                        key={lesson.id}
+                        href={`/curso/${curso.id}/leccion/${lesson.id}`}
+                        className="block border border-slate-200 rounded-xl p-4 hover:bg-blue-50"
+                      >
+                        <span className="font-semibold">
+                          {lesson.title}
+                        </span>
+                      </Link>
+                    ))}
+
+                </div>
+
+              </div>
+            ))}
+
+          </div>
+        ) : (
+          <div className="bg-slate-100 rounded-2xl p-6 mt-6">
+            <p className="text-slate-600">
+              Este curso todavía no tiene lecciones disponibles.
+            </p>
+          </div>
+        )}
+
+      </section>
+
     </main>
   )
 }

@@ -1,3 +1,7 @@
+
+
+
+
 'use client'
 
 import { useState } from 'react'
@@ -23,6 +27,8 @@ export default function Login() {
       await login(email, password)
       router.push('/dashboard')
     } catch (error) {
+      console.error(error)
+
       setErr(
         error instanceof Error
           ? error.message
@@ -53,9 +59,7 @@ export default function Login() {
             placeholder="Correo electrónico"
             type="email"
             value={email}
-            onChange={(e) =>
-              setEmail(e.target.value)
-            }
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
 
@@ -64,9 +68,7 @@ export default function Login() {
             placeholder="Contraseña"
             type="password"
             value={password}
-            onChange={(e) =>
-              setPassword(e.target.value)
-            }
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
 
@@ -75,9 +77,7 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-brand-600 text-white rounded-lg p-3 font-semibold disabled:opacity-50"
           >
-            {loading
-              ? 'Ingresando...'
-              : 'Entrar'}
+            {loading ? 'Ingresando...' : 'Entrar'}
           </button>
         </form>
 

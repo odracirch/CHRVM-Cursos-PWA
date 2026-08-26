@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import EnrollButton from '@/components/EnrollButton'
 
@@ -16,18 +15,22 @@ export default async function CursoPage({
     .from('courses')
     .select('id, title, slug, description, image_url, published')
     .eq('slug', slug)
-    .eq('published', true)
     .maybeSingle()
 
   if (error) {
     return (
       <main className="max-w-5xl mx-auto px-4 py-12">
-        <div className="border border-red-200 bg-red-50 rounded-2xl p-6">
-          <h1 className="text-2xl font-bold text-red-700">
-            Error al cargar el curso
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-8">
+          <h1 className="text-2xl font-black text-red-700">
+            Error de Supabase
           </h1>
-          <p className="text-red-600 mt-2">
+
+          <p className="mt-3 text-red-600">
             {error.message}
+          </p>
+
+          <p className="mt-3 text-sm text-slate-600">
+            Slug recibido: {slug}
           </p>
         </div>
       </main>
@@ -35,7 +38,30 @@ export default async function CursoPage({
   }
 
   if (!curso) {
-    notFound()
+    return (
+      <main className="max-w-5xl mx-auto px-4 py-12">
+        <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-8">
+          <h1 className="text-2xl font-black">
+            Curso no encontrado
+          </h1>
+
+          <p className="mt-3 text-slate-600">
+            Slug recibido:
+          </p>
+
+          <p className="font-mono mt-1">
+            {slug}
+          </p>
+
+          <Link
+            href="/cursos"
+            className="inline-block mt-6 bg-blue-600 text-white px-5 py-3 rounded-xl font-semibold"
+          >
+            Volver a cursos
+          </Link>
+        </div>
+      </main>
+    )
   }
 
   return (

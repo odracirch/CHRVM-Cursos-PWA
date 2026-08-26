@@ -33,16 +33,23 @@ export async function api(
       localStorage.removeItem('chrvm_refresh')
     }
 
-    throw new Error('Sesión expirada. Inicia sesión nuevamente.')
+    throw new Error(
+      'Sesión expirada. Inicia sesión nuevamente.'
+    )
   }
 
   if (!res.ok) {
-    let message = 'Error de API'
+    let message = `Error de API (${res.status})`
 
     try {
       const data = await res.json()
-      message = data.detail || JSON.stringify(data)
-    } catch {}
+
+      message =
+        data.detail ||
+        JSON.stringify(data)
+    } catch (e) {
+      message = `Error de API (${res.status}) - respuesta no JSON`
+    }
 
     throw new Error(message)
   }
@@ -62,8 +69,15 @@ export async function login(
     }),
   })
 
-  localStorage.setItem('chrvm_access', response.access)
-  localStorage.setItem('chrvm_refresh', response.refresh)
+  localStorage.setItem(
+    'chrvm_access',
+    response.access
+  )
+
+  localStorage.setItem(
+    'chrvm_refresh',
+    response.refresh
+  )
 
   return response
 }

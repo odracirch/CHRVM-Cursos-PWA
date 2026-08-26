@@ -1,11 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 type Props = {
   lessonId: string
   courseId: string
+}
+
+type NextLesson = {
+  id: string
+  title: string
 }
 
 export default function CompleteLessonButton({
@@ -15,9 +21,10 @@ export default function CompleteLessonButton({
   const [loading, setLoading] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [message, setMessage] = useState('')
+  const [nextLesson, setNextLesson] = useState<NextLesson | null>(null)
 
   useEffect(() => {
-    async function checkProgress() {
+    async function loadProgress() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -33,11 +40,58 @@ export default function CompleteLessonButton({
 
       if (data?.completed) {
         setCompleted(true)
+        await findNextLesson()
       }
     }
 
-    checkProgress()
-  }, [lessonId])
+    loadProgress()
+  }, [lessonId, courseId])
+
+  async function findNextLesson() {
+    const { data: modules, error: modulesError } = await supabase
+      .from('modules')
+      .select('id, position')
+      .eq('course_id', courseId)
+      .order('position', { ascending: true })
+
+    if (modulesError || !modules) return
+
+    const moduleIds = modules.map((module) => module.id)
+
+    if (moduleIds.length === 0) return
+
+    const { data: lessons, error: lessonsError } = await supabase
+      .from('lessons')
+      .select('id, title, position, module_id')
+      .in('module_id', moduleIds)
+      .eq('published', true)
+
+    if (lessonsError || !lessons) return
+
+    const orderedLessons = modules.flatMap((module) =>
+      lessons
+        .filter((lesson) => lesson.module_id === module.id)
+        .sort((a, b) => a.position - b.position)
+    )
+
+    const currentIndex = orderedLessons.findIndex(
+      (lesson) => lesson.id === lessonId
+    )
+
+    if (
+      currentIndex !== -1 &&
+      currentIndex < orderedLessons.length - 1
+    ) {
+      const next = orderedLessons[currentIndex + 1]
+
+      setNextLesson({
+        id: next.id,
+        title: next.title,
+      })
+    } else {
+      setNextLesson(null)
+    }
+  }
 
   async function markCompleted() {
     setLoading(true)
@@ -52,7 +106,6 @@ export default function CompleteLessonButton({
       return
     }
 
-    // Registrar la lección como completada
     const { data: existing } = await supabase
       .from('lesson_progress')
       .select('id')
@@ -93,7 +146,6 @@ export default function CompleteLessonButton({
       }
     }
 
-    // Obtener los módulos del curso
     const { data: modules, error: modulesError } = await supabase
       .from('modules')
       .select('id')
@@ -113,7 +165,6 @@ export default function CompleteLessonButton({
       return
     }
 
-    // Obtener todas las lecciones del curso
     const { data: lessons, error: lessonsError } = await supabase
       .from('lessons')
       .select('id')
@@ -136,14 +187,15 @@ export default function CompleteLessonButton({
 
     const lessonIds = lessons.map((lesson) => lesson.id)
 
-    // Obtener las lecciones completadas por el alumno
-    const { data: completedLessons, error: progressError } =
-      await supabase
-        .from('lesson_progress')
-        .select('lesson_id')
-        .eq('user_id', user.id)
-        .eq('completed', true)
-        .in('lesson_id', lessonIds)
+    const {
+      data: completedLessons,
+      error: progressError,
+    } = await supabase
+      .from('lesson_progress')
+      .select('lesson_id')
+      .eq('user_id', user.id)
+      .eq('completed', true)
+      .in('lesson_id', lessonIds)
 
     if (progressError) {
       setMessage(progressError.message)
@@ -160,7 +212,6 @@ export default function CompleteLessonButton({
 
     const isCourseCompleted = progress >= 100
 
-    // Actualizar el progreso de la inscripción
     const { data: enrollment } = await supabase
       .from('enrollments')
       .select('id')
@@ -196,7 +247,11 @@ export default function CompleteLessonButton({
     if (isCourseCompleted) {
       setMessage('¡Felicidades! Has completado el curso.')
     } else {
-      setMessage(`Lección completada. Tu progreso es ${progress}%.`)
+      setMessage(
+        `Lección completada. Tu progreso es ${progress}%.`
+      )
+
+      await findNextLesson()
     }
 
     setLoading(false)
@@ -220,6 +275,27 @@ export default function CompleteLessonButton({
         <p className="text-green-600 font-semibold mt-3">
           {message}
         </p>
+      )}
+
+      {completed && nextLesson && (
+        <Link
+          href={`/curso/${courseId}/leccion/${nextLesson.id}`}
+          className="inline-block mt-5 bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
+        >
+          Siguiente lección →
+          <span className="block text-sm font-normal mt-1">
+            {nextLesson.title}
+          </span>
+        </Link>
+      )}
+
+      {completed && !nextLesson && message.includes('completado') && (
+        <Link
+          href="/mis-cursos"
+          className="inline-block mt-5 bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
+        >
+          🏆 Ver mis cursos
+        </Link>
       )}
     </div>
   )

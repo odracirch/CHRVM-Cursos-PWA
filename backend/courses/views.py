@@ -8,7 +8,9 @@ from .permissions import IsAdminOrInstructorOwner
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly
+    ]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'created_at']
 
@@ -20,9 +22,26 @@ class CourseViewSet(viewsets.ModelViewSet):
     ).all().order_by('-created_at')
 
     serializer_class = CourseSerializer
-    filterset_fields = ['category', 'level', 'instructor', 'published']
-    search_fields = ['title', 'description', 'short_description']
-    ordering_fields = ['created_at', 'title', 'price', 'duration']
+
+    filterset_fields = [
+        'category',
+        'level',
+        'instructor',
+        'published'
+    ]
+
+    search_fields = [
+        'title',
+        'description',
+        'short_description'
+    ]
+
+    ordering_fields = [
+        'created_at',
+        'title',
+        'price',
+        'duration'
+    ]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -45,9 +64,14 @@ class CourseViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         serializer.save(
-            instructor=user
-            if user.role == 'instructor'
-            else serializer.validated_data.get('instructor', user)
+            instructor=(
+                user
+                if user.role == 'instructor'
+                else serializer.validated_data.get(
+                    'instructor',
+                    user
+                )
+            )
         )
 
 
@@ -58,18 +82,49 @@ class ModuleViewSet(viewsets.ModelViewSet):
     ).prefetch_related('lessons')
 
     serializer_class = ModuleSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    filterset_fields = ['course']
 
     def get_queryset(self):
         qs = super().get_queryset()
+        user = self.request.user
 
-        if self.request.user.role in ['admin', 'instructor']:
-            if self.request.user.role == 'admin':
+        # Lectura pública para módulos
+        # pertenecientes a cursos publicados
+        if self.action in ['list', 'retrieve']:
+
+            if not user.is_authenticated:
+                return qs.filter(
+                    course__published=True
+                )
+
+            if user.role == 'admin':
                 return qs
 
-            return qs.filter(course__instructor=self.request.user)
+            if user.role == 'instructor':
+                return qs.filter(
+                    course__instructor=user
+                )
 
-        return qs.filter(course__published=True)
+            # Estudiante
+            return qs.filter(
+                course__published=True
+            )
+
+        # Crear, modificar o eliminar:
+        # solamente admin o instructor propietario
+        if user.role == 'admin':
+            return qs
+
+        return qs.filter(
+            course__instructor=user
+        )
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+
+        return [IsAdminOrInstructorOwner()]
 
 
 class LessonViewSet(viewsets.ModelViewSet):
@@ -85,7 +140,9 @@ class LessonViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Lectura pública para lecciones publicadas
+        # de cursos publicados
         if self.action in ['list', 'retrieve']:
+
             if not user.is_authenticated:
                 return qs.filter(
                     published=True,
@@ -100,13 +157,13 @@ class LessonViewSet(viewsets.ModelViewSet):
                     module__course__instructor=user
                 )
 
-            # estudiante
+            # Estudiante
             return qs.filter(
                 published=True,
                 module__course__published=True
             )
 
-        # Para crear/modificar/eliminar:
+        # Crear, modificar o eliminar:
         # solamente admin o instructor propietario
         if user.role == 'admin':
             return qs

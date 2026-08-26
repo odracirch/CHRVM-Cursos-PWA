@@ -6,6 +6,7 @@ import { api } from '@/lib/api'
 
 type Props = {
   lessonId: string
+  djangoLessonId: number
   courseId: string
 }
 
@@ -14,8 +15,14 @@ type ProgressResponse = {
   progress_percentage: number
 }
 
+type ProgressItem = {
+  lesson: number | string
+  completed: boolean
+}
+
 export default function CompleteLessonButton({
   lessonId,
+  djangoLessonId,
   courseId,
 }: Props) {
   const [loading, setLoading] = useState(false)
@@ -31,11 +38,12 @@ export default function CompleteLessonButton({
       const response = (await api('/api/progress/complete/', {
         method: 'POST',
         body: JSON.stringify({
-          lesson: lessonId,
+          lesson: djangoLessonId,
         }),
       })) as ProgressResponse
 
-      const currentProgress = Number(response.progress_percentage) || 0
+      const currentProgress =
+        Number(response.progress_percentage) || 0
 
       setProgress(currentProgress)
       setCompleted(true)
@@ -70,20 +78,23 @@ export default function CompleteLessonButton({
         if (!Array.isArray(data)) return
 
         const current = data.find(
-          (item: { lesson: number | string; completed: boolean }) =>
-            String(item.lesson) === String(lessonId)
+          (item: ProgressItem) =>
+            String(item.lesson) === String(djangoLessonId)
         )
 
         if (current?.completed) {
           setCompleted(true)
         }
       } catch (error) {
-        console.error('No se pudo consultar el progreso:', error)
+        console.error(
+          'No se pudo consultar el progreso:',
+          error
+        )
       }
     }
 
     checkProgress()
-  }, [lessonId])
+  }, [djangoLessonId])
 
   return (
     <div className="mt-8">
@@ -121,11 +132,13 @@ export default function CompleteLessonButton({
         </Link>
       )}
 
-      {completed && progress !== null && progress < 100 && (
-        <p className="text-slate-500 mt-3 text-sm">
-          Continúa con la siguiente lección para aumentar tu progreso.
-        </p>
-      )}
+      {completed &&
+        progress !== null &&
+        progress < 100 && (
+          <p className="text-slate-500 mt-3 text-sm">
+            Continúa con la siguiente lección para aumentar tu progreso.
+          </p>
+        )}
     </div>
   )
 }

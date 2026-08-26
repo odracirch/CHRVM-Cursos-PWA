@@ -2,16 +2,28 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { api } from '@/lib/api'
 
 type Props = {
   lessonId: string
   courseId: string
 }
 
-type NextLesson = {
+type Lesson = {
   id: string
   title: string
+  order?: number
+  position?: number
+  module?: string
+  module_id?: string
+}
+
+type Module = {
+  id: string
+  title: string
+  order?: number
+  position?: number
+  lessons?: Lesson[]
 }
 
 export default function CompleteLessonButton({
@@ -21,240 +33,131 @@ export default function CompleteLessonButton({
   const [loading, setLoading] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [message, setMessage] = useState('')
-  const [nextLesson, setNextLesson] = useState<NextLesson | null>(null)
+  const [nextLesson, setNextLesson] = useState<Lesson | null>(null)
 
   useEffect(() => {
-    async function loadProgress() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      const { data } = await supabase
-        .from('lesson_progress')
-        .select('completed')
-        .eq('user_id', user.id)
-        .eq('lesson_id', lessonId)
-        .maybeSingle()
-
-      if (data?.completed) {
-        setCompleted(true)
-        await findNextLesson()
-      }
-    }
-
     loadProgress()
   }, [lessonId, courseId])
 
+  async function loadProgress() {
+    try {
+      const progress = await api(
+        `/api/progress/?lesson=${encodeURIComponent(lessonId)}`
+      )
+
+      const items = Array.isArray(progress)
+        ? progress
+        : progress?.results ?? []
+
+      const current = items.find(
+        (item: any) =>
+          String(item.lesson) === String(lessonId)
+      )
+
+      if (current?.completed) {
+        setCompleted(true)
+        await findNextLesson()
+      }
+    } catch (error) {
+      console.error('Error cargando progreso:', error)
+    }
+  }
+
   async function findNextLesson() {
-    const { data: modules, error: modulesError } = await supabase
-      .from('modules')
-      .select('id, position')
-      .eq('course_id', courseId)
-      .order('position', { ascending: true })
+    try {
+      const response = await api(
+        `/api/modules/?course=${encodeURIComponent(courseId)}`
+      )
 
-    if (modulesError || !modules) return
+      const modules: Module[] = Array.isArray(response)
+        ? response
+        : response?.results ?? []
 
-    const moduleIds = modules.map((module) => module.id)
+      if (!modules.length) {
+        setNextLesson(null)
+        return
+      }
 
-    if (moduleIds.length === 0) return
+      const orderedModules = [...modules].sort(
+        (a, b) =>
+          Number(a.position ?? a.order ?? 0) -
+          Number(b.position ?? b.order ?? 0)
+      )
 
-    const { data: lessons, error: lessonsError } = await supabase
-      .from('lessons')
-      .select('id, title, position, module_id')
-      .in('module_id', moduleIds)
-      .eq('published', true)
+      const orderedLessons: Lesson[] = orderedModules.flatMap(
+        (module) =>
+          [...(module.lessons ?? [])]
+            .sort(
+              (a, b) =>
+                Number(a.position ?? a.order ?? 0) -
+                Number(b.position ?? b.order ?? 0)
+            )
+            .map((lesson) => ({
+              ...lesson,
+              module_id: module.id,
+            }))
+      )
 
-    if (lessonsError || !lessons) return
+      const currentIndex = orderedLessons.findIndex(
+        (lesson) => String(lesson.id) === String(lessonId)
+      )
 
-    const orderedLessons = modules.flatMap((module) =>
-      lessons
-        .filter((lesson) => lesson.module_id === module.id)
-        .sort((a, b) => a.position - b.position)
-    )
-
-    const currentIndex = orderedLessons.findIndex(
-      (lesson) => lesson.id === lessonId
-    )
-
-    if (
-      currentIndex !== -1 &&
-      currentIndex < orderedLessons.length - 1
-    ) {
-      const next = orderedLessons[currentIndex + 1]
-
-      setNextLesson({
-        id: next.id,
-        title: next.title,
-      })
-    } else {
+      if (
+        currentIndex >= 0 &&
+        currentIndex < orderedLessons.length - 1
+      ) {
+        setNextLesson(orderedLessons[currentIndex + 1])
+      } else {
+        setNextLesson(null)
+      }
+    } catch (error) {
+      console.error('Error buscando siguiente lección:', error)
       setNextLesson(null)
     }
   }
 
   async function markCompleted() {
+    if (loading || completed) return
+
     setLoading(true)
     setMessage('')
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      window.location.href = '/login'
-      return
-    }
-
-    const { data: existing } = await supabase
-      .from('lesson_progress')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('lesson_id', lessonId)
-      .maybeSingle()
-
-    if (existing) {
-      const { error } = await supabase
-        .from('lesson_progress')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existing.id)
-
-      if (error) {
-        setMessage(error.message)
-        setLoading(false)
-        return
-      }
-    } else {
-      const { error } = await supabase
-        .from('lesson_progress')
-        .insert({
-          user_id: user.id,
-          lesson_id: lessonId,
-          completed: true,
-          completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-
-      if (error) {
-        setMessage(error.message)
-        setLoading(false)
-        return
-      }
-    }
-
-    const { data: modules, error: modulesError } = await supabase
-      .from('modules')
-      .select('id')
-      .eq('course_id', courseId)
-
-    if (modulesError) {
-      setMessage(modulesError.message)
-      setLoading(false)
-      return
-    }
-
-    const moduleIds = (modules ?? []).map((module) => module.id)
-
-    if (moduleIds.length === 0) {
-      setMessage('No se encontraron módulos para este curso.')
-      setLoading(false)
-      return
-    }
-
-    const { data: lessons, error: lessonsError } = await supabase
-      .from('lessons')
-      .select('id')
-      .in('module_id', moduleIds)
-      .eq('published', true)
-
-    if (lessonsError) {
-      setMessage(lessonsError.message)
-      setLoading(false)
-      return
-    }
-
-    const totalLessons = lessons?.length ?? 0
-
-    if (totalLessons === 0) {
-      setMessage('Este curso todavía no tiene lecciones publicadas.')
-      setLoading(false)
-      return
-    }
-
-    const lessonIds = lessons.map((lesson) => lesson.id)
-
-    const {
-      data: completedLessons,
-      error: progressError,
-    } = await supabase
-      .from('lesson_progress')
-      .select('lesson_id')
-      .eq('user_id', user.id)
-      .eq('completed', true)
-      .in('lesson_id', lessonIds)
-
-    if (progressError) {
-      setMessage(progressError.message)
-      setLoading(false)
-      return
-    }
-
-    const completedCount = completedLessons?.length ?? 0
-
-    const progress = Math.min(
-      100,
-      Math.round((completedCount / totalLessons) * 100)
-    )
-
-    const isCourseCompleted = progress >= 100
-
-    const { data: enrollment } = await supabase
-      .from('enrollments')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('course_id', courseId)
-      .maybeSingle()
-
-    if (!enrollment) {
-      setMessage('No estás inscrito en este curso.')
-      setLoading(false)
-      return
-    }
-
-    const { error: enrollmentError } = await supabase
-      .from('enrollments')
-      .update({
-        progress_percentage: progress,
-        completed: isCourseCompleted,
-        completed_at: isCourseCompleted
-          ? new Date().toISOString()
-          : null,
+    try {
+      const result = await api('/api/progress/complete/', {
+        method: 'POST',
+        body: JSON.stringify({
+          lesson: lessonId,
+        }),
       })
-      .eq('id', enrollment.id)
 
-    if (enrollmentError) {
-      setMessage(enrollmentError.message)
-      setLoading(false)
-      return
-    }
-
-    setCompleted(true)
-
-    if (isCourseCompleted) {
-      setMessage('¡Felicidades! Has completado el curso.')
-    } else {
-      setMessage(
-        `Lección completada. Tu progreso es ${progress}%.`
+      const progress = Number(
+        result?.progress_percentage ?? 0
       )
 
-      await findNextLesson()
-    }
+      setCompleted(true)
 
-    setLoading(false)
+      if (progress >= 100) {
+        setMessage(
+          '🎉 ¡Felicidades! Has completado el curso y tu certificado ha sido generado.'
+        )
+        setNextLesson(null)
+      } else {
+        setMessage(
+          `Lección completada. Tu progreso es ${progress}%.`
+        )
+        await findNextLesson()
+      }
+    } catch (error) {
+      console.error('Error completando lección:', error)
+
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo completar la lección.'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -272,7 +175,15 @@ export default function CompleteLessonButton({
       </button>
 
       {message && (
-        <p className="text-green-600 font-semibold mt-3">
+        <p
+          className={`font-semibold mt-3 ${
+            message.includes('No se pudo') ||
+            message.includes('expirada') ||
+            message.includes('Error')
+              ? 'text-red-600'
+              : 'text-green-600'
+          }`}
+        >
           {message}
         </p>
       )}
@@ -289,12 +200,12 @@ export default function CompleteLessonButton({
         </Link>
       )}
 
-      {completed && !nextLesson && message.includes('completado') && (
+      {completed && !nextLesson && message.includes('certificado') && (
         <Link
-          href="/mis-cursos"
+          href="/certificados"
           className="inline-block mt-5 bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
         >
-          🏆 Ver mis cursos
+          🏆 Ver mi certificado
         </Link>
       )}
     </div>

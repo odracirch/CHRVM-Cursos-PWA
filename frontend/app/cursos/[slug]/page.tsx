@@ -11,9 +11,17 @@ export default async function CursoPage({
 }) {
   const { slug } = await params
 
+  const {
+    data: {
+      user,
+    },
+  } = await supabase.auth.getUser()
+
   const { data: curso, error } = await supabase
     .from('courses')
-    .select('id, title, slug, description, image_url, published')
+    .select(
+      'id, title, slug, description, image_url, published'
+    )
     .eq('slug', slug)
     .maybeSingle()
 
@@ -64,6 +72,19 @@ export default async function CursoPage({
     )
   }
 
+  let enrolled = false
+
+  if (user) {
+    const { data: enrollment } = await supabase
+      .from('enrollments')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('course_id', curso.id)
+      .maybeSingle()
+
+    enrolled = !!enrollment
+  }
+
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">
 
@@ -98,7 +119,16 @@ export default async function CursoPage({
             {curso.description}
           </p>
 
-          <EnrollButton courseId={curso.id} />
+          {enrolled ? (
+            <Link
+              href={`/curso/${curso.id}`}
+              className="inline-block mt-6 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700"
+            >
+              Continuar curso →
+            </Link>
+          ) : (
+            <EnrollButton courseId={curso.id} />
+          )}
 
         </div>
 

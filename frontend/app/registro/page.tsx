@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { api } from '@/lib/api'
+import { api, login } from '@/lib/api'
 
 export default function Register() {
   const [v, setV] = useState({
@@ -37,18 +37,8 @@ export default function Register() {
         }),
       })
 
-      setMsg('Cuenta creada correctamente. Iniciando sesión...')
-
-      const response = await api('/api/auth/login/', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: v.email,
-          password: v.password,
-        }),
-      })
-
-      localStorage.setItem('chrvm_access', response.access)
-      localStorage.setItem('chrvm_refresh', response.refresh)
+      // Iniciar sesión automáticamente con Django
+      await login(v.email, v.password)
 
       router.push('/dashboard')
     } catch (error) {
@@ -73,13 +63,19 @@ export default function Register() {
           Regístrate gratis en CHRVM Cursos.
         </p>
 
-        <form onSubmit={go} className="space-y-3 mt-6">
+        <form
+          onSubmit={go}
+          className="space-y-3 mt-6"
+        >
           <input
             className="w-full border rounded-lg p-3"
             placeholder="Nombre"
             value={v.first_name}
             onChange={(e) =>
-              setV({ ...v, first_name: e.target.value })
+              setV({
+                ...v,
+                first_name: e.target.value,
+              })
             }
             required
           />
@@ -89,7 +85,10 @@ export default function Register() {
             placeholder="Apellidos"
             value={v.last_name}
             onChange={(e) =>
-              setV({ ...v, last_name: e.target.value })
+              setV({
+                ...v,
+                last_name: e.target.value,
+              })
             }
             required
           />
@@ -100,7 +99,10 @@ export default function Register() {
             type="email"
             value={v.email}
             onChange={(e) =>
-              setV({ ...v, email: e.target.value })
+              setV({
+                ...v,
+                email: e.target.value,
+              })
             }
             required
           />
@@ -111,7 +113,10 @@ export default function Register() {
             type="password"
             value={v.password}
             onChange={(e) =>
-              setV({ ...v, password: e.target.value })
+              setV({
+                ...v,
+                password: e.target.value,
+              })
             }
             minLength={8}
             required
@@ -122,7 +127,9 @@ export default function Register() {
             disabled={loading}
             className="w-full bg-brand-600 text-white rounded-lg p-3 font-semibold disabled:opacity-50"
           >
-            {loading ? 'Creando cuenta...' : 'Registrarme'}
+            {loading
+              ? 'Creando cuenta...'
+              : 'Registrarme'}
           </button>
         </form>
 

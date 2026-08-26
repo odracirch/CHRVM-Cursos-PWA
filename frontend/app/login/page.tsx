@@ -15,6 +15,7 @@ export default function Login() {
 
   async function go(e: React.FormEvent) {
     e.preventDefault()
+
     setErr('')
     setLoading(true)
 
@@ -35,19 +36,26 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto px-4 py-14">
       <div className="card p-7">
-        <h1 className="text-2xl font-black">Ingresar</h1>
+        <h1 className="text-2xl font-black">
+          Ingresar
+        </h1>
 
         <p className="text-slate-500 text-sm mt-2">
           Ingresa a tu cuenta de CHRVM Cursos.
         </p>
 
-        <form onSubmit={go} className="space-y-4 mt-6">
+        <form
+          onSubmit={go}
+          className="space-y-4 mt-6"
+        >
           <input
             className="w-full border rounded-lg p-3"
             placeholder="Correo electrónico"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
             required
           />
 
@@ -56,7 +64,9 @@ export default function Login() {
             placeholder="Contraseña"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
             required
           />
 
@@ -65,7 +75,9 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-brand-600 text-white rounded-lg p-3 font-semibold disabled:opacity-50"
           >
-            {loading ? 'Ingresando...' : 'Entrar'}
+            {loading
+              ? 'Ingresando...'
+              : 'Entrar'}
           </button>
         </form>
 

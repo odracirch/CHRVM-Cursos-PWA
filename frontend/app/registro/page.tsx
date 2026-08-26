@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { api } from '@/lib/api'
 
 export default function Register() {
   const [v, setV] = useState({
@@ -26,39 +26,48 @@ export default function Register() {
     setErr('')
     setLoading(true)
 
-    const { data, error } = await supabase.auth.signUp({
-      email: v.email,
-      password: v.password,
-      options: {
-        data: {
+    try {
+      await api('/api/auth/register/', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: v.email,
           first_name: v.first_name,
           last_name: v.last_name,
-        },
-      },
-    })
+          password: v.password,
+        }),
+      })
 
-    if (error) {
-      setErr(error.message)
-      setLoading(false)
-      return
-    }
+      setMsg('Cuenta creada correctamente. Iniciando sesión...')
 
-    if (data.session) {
+      const response = await api('/api/auth/login/', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: v.email,
+          password: v.password,
+        }),
+      })
+
+      localStorage.setItem('chrvm_access', response.access)
+      localStorage.setItem('chrvm_refresh', response.refresh)
+
       router.push('/dashboard')
-      return
+    } catch (error) {
+      setErr(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo crear la cuenta.'
+      )
+    } finally {
+      setLoading(false)
     }
-
-    setMsg(
-      'Cuenta creada correctamente. Revisa tu correo para confirmar tu cuenta.'
-    )
-
-    setLoading(false)
   }
 
   return (
     <div className="max-w-md mx-auto px-4 py-14">
       <div className="card p-7">
-        <h1 className="text-2xl font-black">Crear cuenta</h1>
+        <h1 className="text-2xl font-black">
+          Crear cuenta
+        </h1>
 
         <p className="text-slate-500 text-sm mt-2">
           Regístrate gratis en CHRVM Cursos.
@@ -104,7 +113,7 @@ export default function Register() {
             onChange={(e) =>
               setV({ ...v, password: e.target.value })
             }
-            minLength={6}
+            minLength={8}
             required
           />
 
@@ -131,7 +140,10 @@ export default function Register() {
 
         <p className="text-sm mt-5">
           ¿Ya tienes cuenta?{' '}
-          <Link className="text-brand-600 font-semibold" href="/login">
+          <Link
+            className="text-brand-600 font-semibold"
+            href="/login"
+          >
             Inicia sesión
           </Link>
         </p>

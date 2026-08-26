@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { api } from '@/lib/api'
 
 export default function AuthGuard({
   children,
@@ -18,35 +18,40 @@ export default function AuthGuard({
     let active = true
 
     async function checkSession() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const token = localStorage.getItem('chrvm_access')
 
-      if (!session) {
+      if (!token) {
         router.replace('/login')
         return
       }
 
-      if (active) {
-        setOk(true)
+      try {
+        const profile = await api('/api/auth/profile/')
+
+        if (
+          roles &&
+          roles.length > 0 &&
+          !roles.includes(profile.role)
+        ) {
+          router.replace('/dashboard')
+          return
+        }
+
+        if (active) {
+          setOk(true)
+        }
+      } catch (error) {
+        console.error(error)
+        localStorage.removeItem('chrvm_access')
+        localStorage.removeItem('chrvm_refresh')
+        router.replace('/login')
       }
     }
 
     checkSession()
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        router.replace('/login')
-      } else if (active) {
-        setOk(true)
-      }
-    })
-
     return () => {
       active = false
-      subscription.unsubscribe()
     }
   }, [router, roles])
 

@@ -17,7 +17,9 @@ export default async function CursoPage({
 
   const { data: curso, error } = await supabase
     .from('courses')
-    .select('id, title, slug, description, image_url, published')
+    .select(
+      'id, title, slug, description, image_url, published'
+    )
     .eq('slug', slug)
     .maybeSingle()
 
@@ -71,14 +73,17 @@ export default async function CursoPage({
   let enrolled = false
 
   if (user) {
-    const { data: enrollment } = await supabase
-      .from('enrollments')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('course_id', curso.id)
-      .maybeSingle()
+    const { data: enrollment, error: enrollmentError } =
+      await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', curso.id)
+        .maybeSingle()
 
-    enrolled = !!enrollment
+    if (!enrollmentError && enrollment) {
+      enrolled = true
+    }
   }
 
   return (
@@ -127,6 +132,7 @@ export default async function CursoPage({
           )}
 
         </div>
+
       </section>
 
     </main>

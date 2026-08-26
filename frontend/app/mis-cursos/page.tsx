@@ -17,7 +17,7 @@ type Enrollment = {
   course_id: string
   progress_percentage: number
   completed: boolean
-  courses: Course | null
+  courses: Course[] | null
 }
 
 export default function MisCursosPage() {
@@ -112,6 +112,7 @@ export default function MisCursosPage() {
 
       {!loading && !error && courses.length === 0 && (
         <div className="mt-10 border border-slate-200 rounded-2xl p-10 text-center">
+
           <h2 className="text-2xl font-bold">
             Todavía no tienes cursos inscritos
           </h2>
@@ -126,6 +127,7 @@ export default function MisCursosPage() {
           >
             Explorar cursos
           </Link>
+
         </div>
       )}
 
@@ -134,13 +136,16 @@ export default function MisCursosPage() {
 
           {courses.map((enrollment) => {
 
-            const course = enrollment.courses
+            const course = enrollment.courses?.[0]
 
             if (!course) return null
 
             const progress = Math.max(
               0,
-              Math.min(100, Number(enrollment.progress_percentage) || 0)
+              Math.min(
+                100,
+                Number(enrollment.progress_percentage) || 0
+              )
             )
 
             return (
@@ -184,6 +189,7 @@ export default function MisCursosPage() {
                   <div className="mt-6">
 
                     <div className="flex justify-between text-sm mb-2">
+
                       <span className="font-semibold">
                         Progreso
                       </span>
@@ -191,13 +197,16 @@ export default function MisCursosPage() {
                       <span className="text-slate-500">
                         {progress}%
                       </span>
+
                     </div>
 
                     <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+
                       <div
                         className="h-full bg-blue-600 rounded-full"
                         style={{ width: `${progress}%` }}
                       />
+
                     </div>
 
                   </div>

@@ -17,7 +17,7 @@ type Enrollment = {
   course_id: string
   progress_percentage: number
   completed: boolean
-  courses: Course[] | null
+  course: Course | null
 }
 
 export default function MisCursosPage() {
@@ -27,44 +27,85 @@ export default function MisCursosPage() {
 
   useEffect(() => {
     async function loadCourses() {
-      setLoading(true)
-      setError('')
+      try {
+        setLoading(true)
+        setError('')
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser()
 
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
+        if (userError) {
+          throw userError
+        }
 
-      const { data, error } = await supabase
-        .from('enrollments')
-        .select(`
-          id,
-          course_id,
-          progress_percentage,
-          completed,
-          courses (
-            id,
-            title,
-            slug,
-            description,
-            image_url
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('enrolled_at', { ascending: false })
+        if (!user) {
+          window.location.href = '/login'
+          return
+        }
 
-      if (error) {
-        setError(error.message)
+        const { data: enrollments, error: enrollmentsError } =
+          await supabase
+            .from('enrollments')
+            .select(
+              'id, course_id, progress_percentage, completed, enrolled_at'
+            )
+            .eq('user_id', user.id)
+            .order('enrolled_at', { ascending: false })
+
+        if (enrollmentsError) {
+          throw enrollmentsError
+        }
+
+        if (!enrollments || enrollments.length === 0) {
+          setCourses([])
+          setLoading(false)
+          return
+        }
+
+        const courseIds = enrollments.map(
+          (enrollment) => enrollment.course_id
+        )
+
+        const { data: coursesData, error: coursesError } =
+          await supabase
+            .from('courses')
+            .select(
+              'id, title, slug, description, image_url'
+            )
+            .in('id', courseIds)
+
+        if (coursesError) {
+          throw coursesError
+        }
+
+        const result: Enrollment[] = enrollments.map(
+          (enrollment) => ({
+            id: enrollment.id,
+            course_id: enrollment.course_id,
+            progress_percentage:
+              Number(enrollment.progress_percentage) || 0,
+            completed: enrollment.completed,
+            course:
+              coursesData?.find(
+                (course) => course.id === enrollment.course_id
+              ) ?? null,
+          })
+        )
+
+        setCourses(result)
+      } catch (err) {
+        console.error(err)
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Ocurrió un error al cargar tus cursos.'
+        )
+      } finally {
         setLoading(false)
-        return
       }
-
-      setCourses((data ?? []) as Enrollment[])
-      setLoading(false)
     }
 
     loadCourses()
@@ -136,9 +177,24 @@ export default function MisCursosPage() {
 
           {courses.map((enrollment) => {
 
-            const course = enrollment.courses?.[0]
+            const course = enrollment.course
 
-            if (!course) return null
+            if (!course) {
+              return (
+                <article
+                  key={enrollment.id}
+                  className="border border-yellow-200 bg-yellow-50 rounded-2xl p-6"
+                >
+                  <h2 className="font-bold">
+                    Curso no disponible
+                  </h2>
+
+                  <p className="text-sm text-yellow-700 mt-2">
+                    No se encontró la información del curso.
+                  </p>
+                </article>
+              )
+            }
 
             const progress = Math.max(
               0,

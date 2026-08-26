@@ -38,6 +38,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [coursesLoading, setCoursesLoading] = useState(true)
   const [error, setError] = useState('')
+
   const router = useRouter()
 
   useEffect(() => {
@@ -67,24 +68,26 @@ export default function Dashboard() {
 
       setLoading(false)
 
-      const { data: enrollmentData, error: enrollmentError } =
-        await supabase
-          .from('enrollments')
-          .select(`
+      const {
+        data: enrollmentData,
+        error: enrollmentError,
+      } = await supabase
+        .from('enrollments')
+        .select(`
+          id,
+          course_id,
+          progress_percentage,
+          completed,
+          courses (
             id,
-            course_id,
-            progress_percentage,
-            completed,
-            courses (
-              id,
-              title,
-              slug,
-              description,
-              image_url
-            )
-          `)
-          .eq('user_id', user.id)
-          .order('enrolled_at', { ascending: false })
+            title,
+            slug,
+            description,
+            image_url
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('enrolled_at', { ascending: false })
 
       if (enrollmentError) {
         setError(enrollmentError.message)
@@ -114,6 +117,7 @@ export default function Dashboard() {
     <AuthGuard roles={['admin', 'instructor', 'student']}>
       <div className="max-w-6xl mx-auto px-4 py-10">
 
+        {/* ENCABEZADO */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
           <div>
@@ -135,8 +139,10 @@ export default function Dashboard() {
 
         </div>
 
-        <div className="grid md:grid-cols-3 gap-5 mt-8">
+        {/* TARJETAS PRINCIPALES */}
+        <div className="grid md:grid-cols-4 gap-5 mt-8">
 
+          {/* USUARIO */}
           <div className="card p-5">
             <div className="text-sm text-slate-500">
               Usuario
@@ -147,6 +153,7 @@ export default function Dashboard() {
             </b>
           </div>
 
+          {/* ROL */}
           <div className="card p-5">
             <div className="text-sm text-slate-500">
               Rol
@@ -157,6 +164,7 @@ export default function Dashboard() {
             </b>
           </div>
 
+          {/* CATÁLOGO */}
           <div className="card p-5">
             <Link
               href="/cursos"
@@ -166,8 +174,19 @@ export default function Dashboard() {
             </Link>
           </div>
 
+          {/* CERTIFICADOS */}
+          <div className="card p-5">
+            <Link
+              href="/certificados"
+              className="font-semibold text-blue-600"
+            >
+              🏆 Mis certificados →
+            </Link>
+          </div>
+
         </div>
 
+        {/* MIS CURSOS */}
         <section className="mt-10">
 
           <div className="flex items-center justify-between">
@@ -185,6 +204,7 @@ export default function Dashboard() {
 
           </div>
 
+          {/* CARGANDO */}
           {coursesLoading && (
             <div className="card p-6 mt-4">
               <p className="text-slate-500">
@@ -193,6 +213,7 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ERROR */}
           {error && (
             <div className="mt-4 border border-red-200 bg-red-50 rounded-xl p-5">
 
@@ -207,9 +228,11 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* SIN CURSOS */}
           {!coursesLoading &&
             !error &&
             enrollments.length === 0 && (
+
               <div className="card p-6 mt-4">
 
                 <h3 className="text-lg font-bold">
@@ -230,6 +253,7 @@ export default function Dashboard() {
               </div>
             )}
 
+          {/* CURSOS */}
           {!coursesLoading &&
             !error &&
             enrollments.length > 0 && (
@@ -260,6 +284,7 @@ export default function Dashboard() {
                       className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm"
                     >
 
+                      {/* IMAGEN */}
                       <div className="h-40 bg-slate-900">
 
                         {course.image_url ? (
@@ -278,6 +303,7 @@ export default function Dashboard() {
 
                       </div>
 
+                      {/* INFORMACIÓN */}
                       <div className="p-5">
 
                         <span className="text-sm text-blue-600 font-semibold">
@@ -292,6 +318,7 @@ export default function Dashboard() {
                           {course.description}
                         </p>
 
+                        {/* PROGRESO */}
                         <div className="mt-5">
 
                           <div className="flex justify-between text-sm mb-2">
@@ -319,11 +346,14 @@ export default function Dashboard() {
 
                         </div>
 
+                        {/* CONTINUAR */}
                         <Link
                           href={`/cursos/${course.slug}`}
                           className="inline-block mt-5 bg-blue-600 text-white rounded-lg px-5 py-3 font-semibold"
                         >
-                          Continuar curso →
+                          {enrollment.completed
+                            ? 'Ver curso →'
+                            : 'Continuar curso →'}
                         </Link>
 
                       </div>

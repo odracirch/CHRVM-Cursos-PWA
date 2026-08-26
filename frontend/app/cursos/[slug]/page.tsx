@@ -14,29 +14,29 @@ export default async function CursoPage({
 
   const { data: curso, error } = await supabase
     .from('courses')
-    .select('*')
+    .select('id, title, slug, description, image_url, published')
     .eq('slug', slug)
     .eq('published', true)
-    .single()
+    .maybeSingle()
 
-  if (error || !curso) {
-    notFound()
+  if (error) {
+    return (
+      <main className="max-w-5xl mx-auto px-4 py-12">
+        <div className="border border-red-200 bg-red-50 rounded-2xl p-6">
+          <h1 className="text-2xl font-bold text-red-700">
+            Error al cargar el curso
+          </h1>
+          <p className="text-red-600 mt-2">
+            {error.message}
+          </p>
+        </div>
+      </main>
+    )
   }
 
-  const { data: modulos } = await supabase
-    .from('modules')
-    .select(`
-      id,
-      title,
-      position,
-      lessons (
-        id,
-        title,
-        position
-      )
-    `)
-    .eq('course_id', curso.id)
-    .order('position')
+  if (!curso) {
+    notFound()
+  }
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">
@@ -48,74 +48,33 @@ export default async function CursoPage({
         ← Volver a cursos
       </Link>
 
-      <section className="mt-6 bg-slate-950 text-white rounded-3xl p-8 md:p-12">
+      <section className="mt-6 rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-sm">
 
-        <span className="text-blue-400 font-semibold">
-          Curso
-        </span>
-
-        <h1 className="text-4xl md:text-5xl font-black mt-3">
-          {curso.title}
-        </h1>
-
-        <p className="text-slate-300 text-lg mt-5">
-          {curso.description}
-        </p>
-
-        <EnrollButton courseId={curso.id} />
-
-      </section>
-
-      <section className="mt-10">
-
-        <h2 className="text-3xl font-black">
-          Contenido del curso
-        </h2>
-
-        {modulos && modulos.length > 0 ? (
-          <div className="mt-6 space-y-6">
-
-            {modulos.map((modulo) => (
-              <div
-                key={modulo.id}
-                className="border border-slate-200 rounded-2xl bg-white overflow-hidden"
-              >
-
-                <div className="bg-slate-100 px-6 py-4">
-                  <h3 className="text-xl font-bold">
-                    {modulo.title}
-                  </h3>
-                </div>
-
-                <div className="p-4 space-y-2">
-
-                  {modulo.lessons
-                    ?.sort((a, b) => a.position - b.position)
-                    .map((lesson) => (
-                      <Link
-                        key={lesson.id}
-                        href={`/curso/${curso.id}/leccion/${lesson.id}`}
-                        className="block border border-slate-200 rounded-xl p-4 hover:bg-blue-50"
-                      >
-                        <span className="font-semibold">
-                          {lesson.title}
-                        </span>
-                      </Link>
-                    ))}
-
-                </div>
-
-              </div>
-            ))}
-
-          </div>
-        ) : (
-          <div className="bg-slate-100 rounded-2xl p-6 mt-6">
-            <p className="text-slate-600">
-              Este curso todavía no tiene lecciones disponibles.
-            </p>
-          </div>
+        {curso.image_url && (
+          <img
+            src={curso.image_url}
+            alt={curso.title}
+            className="w-full h-64 object-cover"
+          />
         )}
+
+        <div className="p-8">
+
+          <span className="text-blue-600 font-semibold">
+            Curso
+          </span>
+
+          <h1 className="text-4xl font-black mt-2">
+            {curso.title}
+          </h1>
+
+          <p className="text-slate-600 text-lg mt-4">
+            {curso.description}
+          </p>
+
+          <EnrollButton courseId={curso.id} />
+
+        </div>
 
       </section>
 

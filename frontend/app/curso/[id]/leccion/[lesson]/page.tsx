@@ -1,14 +1,15 @@
-import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import CompleteLessonButton from '@/components/CompleteLessonButton'
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
 export default async function LessonPage({
   params,
 }: {
-  params: Promise<{ id: string; lesson: string }>;
+  params: Promise<{ id: string; lesson: string }>
 }) {
-  const { id, lesson } = await params;
+  const { id, lesson } = await params
 
   const { data: leccion, error } = await supabase
     .from('lessons')
@@ -31,7 +32,8 @@ export default async function LessonPage({
       )
     `)
     .eq('id', lesson)
-    .single();
+    .eq('published', true)
+    .single()
 
   if (error || !leccion) {
     return (
@@ -51,18 +53,18 @@ export default async function LessonPage({
           Volver a cursos
         </Link>
       </main>
-    );
+    )
   }
 
   const modulo = Array.isArray(leccion.modules)
     ? leccion.modules[0]
-    : leccion.modules;
+    : leccion.modules
 
   const curso = modulo?.courses
     ? Array.isArray(modulo.courses)
       ? modulo.courses[0]
       : modulo.courses
-    : null;
+    : null
 
   if (!curso || curso.id !== id) {
     return (
@@ -82,11 +84,12 @@ export default async function LessonPage({
           Volver a cursos
         </Link>
       </main>
-    );
+    )
   }
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
+
       <Link
         href={`/cursos/${curso.slug}`}
         className="text-blue-600 font-semibold"
@@ -95,6 +98,7 @@ export default async function LessonPage({
       </Link>
 
       <div className="mt-6">
+
         <p className="text-sm text-blue-600 font-semibold">
           {modulo.title}
         </p>
@@ -108,9 +112,11 @@ export default async function LessonPage({
             ⏱️ {leccion.duration_minutes} minutos
           </p>
         )}
+
       </div>
 
       <article className="card p-7 md:p-10 mt-8">
+
         {leccion.description && (
           <p className="text-lg text-slate-600 mb-8">
             {leccion.description}
@@ -118,12 +124,14 @@ export default async function LessonPage({
         )}
 
         <div className="prose max-w-none">
+
           {leccion.content ? (
             <div className="whitespace-pre-wrap">
               {leccion.content}
             </div>
           ) : (
             <div className="bg-slate-50 rounded-xl p-6">
+
               <h2 className="text-2xl font-bold">
                 Contenido de la lección
               </h2>
@@ -132,12 +140,16 @@ export default async function LessonPage({
                 El contenido detallado de esta lección estará
                 disponible próximamente.
               </p>
+
             </div>
           )}
+
         </div>
+
       </article>
 
       <div className="flex justify-between items-center mt-8">
+
         <Link
           href={`/cursos/${curso.slug}`}
           className="border border-slate-300 bg-white px-5 py-3 rounded-xl font-semibold"
@@ -145,13 +157,13 @@ export default async function LessonPage({
           ← Contenido del curso
         </Link>
 
-        <button
-          className="bg-blue-600 text-white px-5 py-3 rounded-xl font-semibold"
-          disabled
-        >
-          Marcar como completada
-        </button>
+        <CompleteLessonButton
+          lessonId={leccion.id}
+          courseId={curso.id}
+        />
+
       </div>
+
     </main>
-  );
+  )
 }

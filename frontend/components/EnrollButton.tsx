@@ -9,7 +9,8 @@ export default function EnrollButton({
 }: {
   courseId: string
 }) {
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
   const [enrolled, setEnrolled] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -18,8 +19,7 @@ export default function EnrollButton({
 
   useEffect(() => {
     async function checkEnrollment() {
-      setLoading(true)
-      setError('')
+      setChecking(true)
 
       const {
         data: { user },
@@ -27,25 +27,25 @@ export default function EnrollButton({
 
       if (!user) {
         setEnrolled(false)
-        setLoading(false)
+        setChecking(false)
         return
       }
 
-      const { data: existing, error } = await supabase
-        .from('enrollments')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('course_id', courseId)
-        .maybeSingle()
+      const { data: existing, error: enrollmentError } =
+        await supabase
+          .from('enrollments')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('course_id', courseId)
+          .maybeSingle()
 
-      if (error) {
-        setError(error.message)
-        setEnrolled(false)
+      if (enrollmentError) {
+        setError(enrollmentError.message)
       } else {
         setEnrolled(!!existing)
       }
 
-      setLoading(false)
+      setChecking(false)
     }
 
     checkEnrollment()
@@ -65,30 +65,39 @@ export default function EnrollButton({
       return
     }
 
-    const { data: existing } = await supabase
-      .from('enrollments')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('course_id', courseId)
-      .maybeSingle()
+    const { data: existing, error: checkError } =
+      await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .maybeSingle()
 
-    if (existing) {
-      setEnrolled(true)
+    if (checkError) {
+      setError(checkError.message)
       setLoading(false)
       return
     }
 
-    const { error } = await supabase
-      .from('enrollments')
-      .insert({
-        user_id: user.id,
-        course_id: courseId,
-        progress_percentage: 0,
-        completed: false,
-      })
+    if (existing) {
+      setEnrolled(true)
+      setLoading(false)
+      router.push(`/curso/${courseId}`)
+      return
+    }
 
-    if (error) {
-      setError(error.message)
+    const { error: insertError } =
+      await supabase
+        .from('enrollments')
+        .insert({
+          user_id: user.id,
+          course_id: courseId,
+          progress_percentage: 0,
+          completed: false,
+        })
+
+    if (insertError) {
+      setError(insertError.message)
       setLoading(false)
       return
     }
@@ -96,20 +105,24 @@ export default function EnrollButton({
     setEnrolled(true)
     setMessage('¡Te has inscrito correctamente!')
     setLoading(false)
+
+    setTimeout(() => {
+      router.push(`/curso/${courseId}`)
+    }, 800)
   }
 
   function continueCourse() {
-    router.push('/mis-cursos')
+    router.push(`/curso/${courseId}`)
   }
 
-  if (loading) {
+  if (checking) {
     return (
       <div className="mt-8">
         <button
           disabled
-          className="bg-slate-300 text-slate-600 px-6 py-3 rounded-xl font-semibold"
+          className="bg-slate-400 text-white px-6 py-3 rounded-xl font-semibold"
         >
-          Comprobando inscripción...
+          Verificando inscripción...
         </button>
       </div>
     )
@@ -120,7 +133,7 @@ export default function EnrollButton({
       {enrolled ? (
         <button
           onClick={continueCourse}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold"
+          className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
         >
           Continuar curso
         </button>
@@ -130,7 +143,7 @@ export default function EnrollButton({
           disabled={loading}
           className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold disabled:opacity-50"
         >
-          Inscribirme al curso
+          {loading ? 'Inscribiendo...' : 'Inscribirme al curso'}
         </button>
       )}
 

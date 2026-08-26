@@ -1,4 +1,3 @@
-```tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -91,7 +90,9 @@ export default function Dashboard() {
         setError(enrollmentError.message)
         setEnrollments([])
       } else {
-        setEnrollments((enrollmentData ?? []) as unknown as Enrollment[])
+        setEnrollments(
+          (enrollmentData ?? []) as unknown as Enrollment[]
+        )
       }
 
       setCoursesLoading(false)
@@ -194,6 +195,7 @@ export default function Dashboard() {
 
           {error && (
             <div className="mt-4 border border-red-200 bg-red-50 rounded-xl p-5">
+
               <p className="font-semibold text-red-700">
                 No se pudieron cargar tus cursos
               </p>
@@ -201,133 +203,137 @@ export default function Dashboard() {
               <p className="text-red-600 text-sm mt-2">
                 {error}
               </p>
-            </div>
-          )}
-
-          {!coursesLoading && !error && enrollments.length === 0 && (
-            <div className="card p-6 mt-4">
-
-              <h3 className="text-lg font-bold">
-                Todavía no tienes cursos inscritos.
-              </h3>
-
-              <p className="text-slate-600 mt-2">
-                Explora el catálogo y comienza tu aprendizaje.
-              </p>
-
-              <Link
-                href="/cursos"
-                className="inline-block mt-4 bg-brand-600 text-white rounded-lg px-5 py-3 font-semibold"
-              >
-                Explorar cursos
-              </Link>
 
             </div>
           )}
 
-          {!coursesLoading && !error && enrollments.length > 0 && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+          {!coursesLoading &&
+            !error &&
+            enrollments.length === 0 && (
+              <div className="card p-6 mt-4">
 
-              {enrollments.map((enrollment) => {
+                <h3 className="text-lg font-bold">
+                  Todavía no tienes cursos inscritos.
+                </h3>
 
-                const course = Array.isArray(enrollment.courses)
-                  ? enrollment.courses[0]
-                  : null
+                <p className="text-slate-600 mt-2">
+                  Explora el catálogo y comienza tu aprendizaje.
+                </p>
 
-                if (!course) {
-                  return null
-                }
+                <Link
+                  href="/cursos"
+                  className="inline-block mt-4 bg-brand-600 text-white rounded-lg px-5 py-3 font-semibold"
+                >
+                  Explorar cursos
+                </Link>
 
-                const progress = Math.max(
-                  0,
-                  Math.min(
-                    100,
-                    Number(enrollment.progress_percentage) || 0
+              </div>
+            )}
+
+          {!coursesLoading &&
+            !error &&
+            enrollments.length > 0 && (
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+
+                {enrollments.map((enrollment) => {
+
+                  const course = Array.isArray(enrollment.courses)
+                    ? enrollment.courses[0]
+                    : null
+
+                  if (!course) {
+                    return null
+                  }
+
+                  const progress = Math.max(
+                    0,
+                    Math.min(
+                      100,
+                      Number(enrollment.progress_percentage) || 0
+                    )
                   )
-                )
 
-                return (
-                  <article
-                    key={enrollment.id}
-                    className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm"
-                  >
+                  return (
+                    <article
+                      key={enrollment.id}
+                      className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm"
+                    >
 
-                    <div className="h-40 bg-slate-900">
+                      <div className="h-40 bg-slate-900">
 
-                      {course.image_url ? (
-                        <img
-                          src={course.image_url}
-                          alt={course.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full flex items-center justify-center">
-                          <span className="text-white text-5xl font-black">
-                            C
-                          </span>
-                        </div>
-                      )}
-
-                    </div>
-
-                    <div className="p-5">
-
-                      <span className="text-sm text-blue-600 font-semibold">
-                        Mi curso
-                      </span>
-
-                      <h3 className="text-xl font-bold mt-2">
-                        {course.title}
-                      </h3>
-
-                      <p className="text-slate-600 text-sm mt-2 line-clamp-3">
-                        {course.description}
-                      </p>
-
-                      <div className="mt-5">
-
-                        <div className="flex justify-between text-sm mb-2">
-
-                          <span className="font-semibold">
-                            Progreso
-                          </span>
-
-                          <span className="text-slate-500">
-                            {progress}%
-                          </span>
-
-                        </div>
-
-                        <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-
-                          <div
-                            className="h-full bg-blue-600 rounded-full"
-                            style={{
-                              width: `${progress}%`,
-                            }}
+                        {course.image_url ? (
+                          <img
+                            src={course.image_url}
+                            alt={course.title}
+                            className="w-full h-full object-cover"
                           />
-
-                        </div>
+                        ) : (
+                          <div className="h-full flex items-center justify-center">
+                            <span className="text-white text-5xl font-black">
+                              C
+                            </span>
+                          </div>
+                        )}
 
                       </div>
 
-                      <Link
-                        href={`/cursos/${course.slug}`}
-                        className="block text-center bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 mt-5 font-semibold"
-                      >
-                        {enrollment.completed
-                          ? 'Ver curso'
-                          : 'Continuar curso'}
-                      </Link>
+                      <div className="p-5">
 
-                    </div>
+                        <span className="text-sm text-blue-600 font-semibold">
+                          Mi curso
+                        </span>
 
-                  </article>
-                )
-              })}
+                        <h3 className="text-xl font-bold mt-2">
+                          {course.title}
+                        </h3>
 
-            </div>
-          )}
+                        <p className="text-slate-600 text-sm mt-2 line-clamp-3">
+                          {course.description}
+                        </p>
+
+                        <div className="mt-5">
+
+                          <div className="flex justify-between text-sm mb-2">
+
+                            <span className="font-semibold">
+                              Progreso
+                            </span>
+
+                            <span className="text-slate-500">
+                              {progress}%
+                            </span>
+
+                          </div>
+
+                          <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+
+                            <div
+                              className="h-full bg-blue-600 rounded-full"
+                              style={{
+                                width: `${progress}%`,
+                              }}
+                            />
+
+                          </div>
+
+                        </div>
+
+                        <Link
+                          href={`/cursos/${course.slug}`}
+                          className="inline-block mt-5 bg-blue-600 text-white rounded-lg px-5 py-3 font-semibold"
+                        >
+                          Continuar curso →
+                        </Link>
+
+                      </div>
+
+                    </article>
+                  )
+                })}
+
+              </div>
+            )}
 
         </section>
 
@@ -335,4 +341,3 @@ export default function Dashboard() {
     </AuthGuard>
   )
 }
-```

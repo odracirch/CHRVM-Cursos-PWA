@@ -114,7 +114,7 @@ export default function Dashboard() {
   }
 
   return (
-    <AuthGuard roles={['admin', 'instructor', 'student']}>
+    <AuthGuard roles={['admin', 'instructor', 'estudiante']}>
       <div className="max-w-6xl mx-auto px-4 py-10">
 
         {/* ENCABEZADO */}

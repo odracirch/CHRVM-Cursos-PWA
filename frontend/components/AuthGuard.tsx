@@ -24,10 +24,10 @@ export default function AuthGuard({
 
       const {
         data: { user },
-        error,
+        error: userError,
       } = await supabase.auth.getUser()
 
-      if (error || !user) {
+      if (userError || !user) {
         if (active) {
           setOk(false)
           setChecking(false)
@@ -62,12 +62,13 @@ export default function AuthGuard({
       }
 
       if (profile.activo === false) {
+        await supabase.auth.signOut()
+
         if (active) {
           setOk(false)
           setChecking(false)
         }
 
-        await supabase.auth.signOut()
         router.replace('/login')
         return
       }
@@ -77,6 +78,11 @@ export default function AuthGuard({
         roles.length > 0 &&
         !roles.includes(profile.rol)
       ) {
+        console.warn(
+          `Rol no permitido: ${profile.rol}`,
+          roles
+        )
+
         if (active) {
           setOk(false)
           setChecking(false)

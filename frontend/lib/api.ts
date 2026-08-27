@@ -4,13 +4,24 @@ export const API =
   process.env.NEXT_PUBLIC_API_URL ||
   'https://chrvm-cursos-backend.onrender.com'
 
+/**
+ * Realiza peticiones autenticadas contra Django.
+ *
+ * La autenticación pertenece exclusivamente a Supabase.
+ * Django recibe y valida el access_token de Supabase.
+ */
 export async function api(
   path: string,
   options: RequestInit = {}
 ) {
   const {
     data: { session },
+    error: sessionError,
   } = await supabase.auth.getSession()
+
+  if (sessionError) {
+    console.error('SUPABASE SESSION ERROR:', sessionError)
+  }
 
   const headers = new Headers(options.headers)
 
@@ -25,6 +36,14 @@ export async function api(
     )
   }
 
+  console.log('API REQUEST:', {
+    url: `${API}${path}`,
+    hasToken: !!session?.access_token,
+    tokenParts: session?.access_token
+      ? session.access_token.split('.').length
+      : 0,
+  })
+
   const res = await fetch(`${API}${path}`, {
     ...options,
     headers,
@@ -36,13 +55,20 @@ export async function api(
 
     try {
       const data = await res.json()
+
       message =
         data.detail ||
+        data.message ||
         JSON.stringify(data)
     } catch {
-      message =
-        `Error de API (${res.status})`
+      message = `Error de API (${res.status})`
     }
+
+    console.error('API ERROR:', {
+      status: res.status,
+      url: `${API}${path}`,
+      message,
+    })
 
     throw new Error(message)
   }
@@ -52,6 +78,11 @@ export async function api(
     : res.json()
 }
 
+/**
+ * Login exclusivamente mediante Supabase Auth.
+ *
+ * Django NO genera ningún JWT.
+ */
 export async function login(
   email: string,
   password: string
@@ -70,9 +101,7 @@ export async function login(
       error
     )
 
-    throw new Error(
-      error.message
-    )
+    throw new Error(error.message)
   }
 
   if (!data.session) {
@@ -81,21 +110,25 @@ export async function login(
     )
   }
 
-  console.log(
-    'SUPABASE LOGIN OK:',
-    data.user?.email
-  )
+  console.log('SUPABASE LOGIN OK:', {
+    email: data.user?.email,
+    hasAccessToken: !!data.session.access_token,
+    tokenParts: data.session.access_token
+      ? data.session.access_token.split('.').length
+      : 0,
+  })
 
   return data
 }
 
+/**
+ * Cierra la sesión únicamente en Supabase.
+ */
 export async function logout() {
   const { error } =
     await supabase.auth.signOut()
 
   if (error) {
-    throw new Error(
-      error.message
-    )
+    throw new Error(error.message)
   }
 }

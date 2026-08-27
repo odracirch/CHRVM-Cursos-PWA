@@ -381,6 +381,17 @@ export default function CursoPage() {
                   Progreso: {progress}%
                 </p>
 
+                <button
+                  onClick={() =>
+                    router.push(
+                      `/curso/${currentCourse.id}/evaluacion`
+                    )
+                  }
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
+                >
+                  📝 Presentar evaluación
+                </button>
+
                 {progress >= 100 && (
                   <p className="text-green-600 font-semibold mt-2">
                     ✓ Curso completado

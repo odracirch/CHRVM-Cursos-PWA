@@ -118,7 +118,7 @@ export default function EnrollButton({ courseId }: Props) {
       if (existing) {
         setEnrolled(true)
         setMessage('Ya estás inscrito en este curso.')
-        router.push(`/cursos/${courseId}`)
+        router.push(`/curso/${courseId}`)
         return
       }
 
@@ -145,7 +145,7 @@ export default function EnrollButton({ courseId }: Props) {
       setMessage('¡Te has inscrito correctamente!')
 
       setTimeout(() => {
-        router.push(`/cursos/${courseId}`)
+        router.push(`/curso/${courseId}`)
         router.refresh()
       }, 700)
     } catch (err) {

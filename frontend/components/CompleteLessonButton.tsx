@@ -17,6 +17,7 @@ export default function CompleteLessonButton({
   const [completed, setCompleted] = useState(false)
   const [progress, setProgress] = useState<number | null>(null)
   const [message, setMessage] = useState('')
+  const [certificateCreated, setCertificateCreated] = useState(false)
 
   async function loadProgress() {
     const {
@@ -34,10 +35,15 @@ export default function CompleteLessonButton({
 
     setCompleted(!!current?.completed)
 
-    const { data: modules } = await supabase
+    const { data: modules, error: modulesError } = await supabase
       .from('modules')
       .select('id')
       .eq('course_id', courseId)
+
+    if (modulesError) {
+      console.error('Error cargando módulos:', modulesError)
+      return
+    }
 
     const moduleIds = modules?.map((m) => m.id) ?? []
 
@@ -46,11 +52,16 @@ export default function CompleteLessonButton({
       return
     }
 
-    const { data: lessons } = await supabase
+    const { data: lessons, error: lessonsError } = await supabase
       .from('lessons')
       .select('id')
       .in('module_id', moduleIds)
       .eq('published', true)
+
+    if (lessonsError) {
+      console.error('Error cargando lecciones:', lessonsError)
+      return
+    }
 
     const lessonIds = lessons?.map((l) => l.id) ?? []
 
@@ -59,18 +70,79 @@ export default function CompleteLessonButton({
       return
     }
 
-    const { data: completedLessons } = await supabase
-      .from('lesson_progress')
-      .select('lesson_id')
-      .eq('user_id', user.id)
-      .eq('completed', true)
-      .in('lesson_id', lessonIds)
+    const { data: completedLessons, error: progressError } =
+      await supabase
+        .from('lesson_progress')
+        .select('lesson_id')
+        .eq('user_id', user.id)
+        .eq('completed', true)
+        .in('lesson_id', lessonIds)
+
+    if (progressError) {
+      console.error(
+        'Error cargando progreso:',
+        progressError
+      )
+      return
+    }
 
     const percentage = Math.round(
-      ((completedLessons?.length ?? 0) / lessonIds.length) * 100
+      ((completedLessons?.length ?? 0) /
+        lessonIds.length) *
+        100
     )
 
     setProgress(percentage)
+
+    if (percentage >= 100) {
+      await createCertificate(user.id)
+    }
+  }
+
+  async function createCertificate(userId: string) {
+    const { data: existing, error: existingError } =
+      await supabase
+        .from('certificates')
+        .select('id, folio')
+        .eq('user_id', userId)
+        .eq('course_id', courseId)
+        .maybeSingle()
+
+    if (existingError) {
+      console.error(
+        'Error comprobando certificado:',
+        existingError
+      )
+      return
+    }
+
+    if (existing) {
+      setCertificateCreated(true)
+      return
+    }
+
+    const folio =
+      `CHRVM-${courseId.slice(0, 8).toUpperCase()}-` +
+      `${Date.now().toString(36).toUpperCase()}`
+
+    const { error: certificateError } = await supabase
+      .from('certificates')
+      .insert({
+        user_id: userId,
+        course_id: courseId,
+        folio,
+        issued_at: new Date().toISOString(),
+      })
+
+    if (certificateError) {
+      console.error(
+        'Error creando certificado:',
+        certificateError
+      )
+      return
+    }
+
+    setCertificateCreated(true)
   }
 
   async function markCompleted() {
@@ -108,9 +180,7 @@ export default function CompleteLessonButton({
       setCompleted(true)
 
       setMessage(
-        progress !== null && progress >= 100
-          ? '¡Felicidades! Has completado el curso.'
-          : 'Lección completada correctamente.'
+        'Lección completada correctamente.'
       )
     } catch (error) {
       console.error(error)
@@ -156,12 +226,20 @@ export default function CompleteLessonButton({
       )}
 
       {progress !== null && progress >= 100 && (
-        <Link
-          href="/certificados"
-          className="inline-block mt-5 bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
-        >
-          🏆 Ver mi certificado
-        </Link>
+        <div className="mt-5">
+          {certificateCreated && (
+            <p className="text-green-600 font-semibold mb-3">
+              🏆 Certificado generado correctamente.
+            </p>
+          )}
+
+          <Link
+            href="/certificados"
+            className="inline-block bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
+          >
+            🏆 Ver mi certificado
+          </Link>
+        </div>
       )}
     </div>
   )

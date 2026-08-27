@@ -229,7 +229,7 @@ function CertificatesContent() {
 
 export default function Page() {
   return (
-    <AuthGuard roles={['student']}>
+    <AuthGuard roles={['estudiante']}>
       <CertificatesContent />
     </AuthGuard>
   )

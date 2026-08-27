@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { login } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -20,28 +20,28 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const result = await login(
-        email.trim(),
-        password
-      )
+      const { data, error } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
 
-      console.log(
-        'LOGIN COMPLETO:',
-        result.user?.email
-      )
+      if (error) {
+        throw new Error(error.message)
+      }
 
-      setErr(
-        `Login correcto. Usuario: ${result.user?.email || 'sin email'}`
-      )
-
-      if (!result.session) {
+      if (!data.session) {
         throw new Error(
           'Supabase no creó una sesión.'
         )
       }
 
-      router.replace('/dashboard')
+      console.log(
+        'LOGIN COMPLETO:',
+        data.user?.email
+      )
 
+      router.replace('/dashboard')
     } catch (error) {
       console.error(
         'ERROR EN LOGIN:',
@@ -53,7 +53,6 @@ export default function Login() {
           ? error.message
           : 'No se pudo iniciar sesión.'
       )
-
     } finally {
       setLoading(false)
     }
@@ -75,7 +74,6 @@ export default function Login() {
           onSubmit={go}
           className="space-y-4 mt-6"
         >
-
           <input
             className="w-full border rounded-lg p-3"
             placeholder="Correo electrónico"
@@ -109,7 +107,6 @@ export default function Login() {
               ? 'Ingresando...'
               : 'Entrar'}
           </button>
-
         </form>
 
         {err && (

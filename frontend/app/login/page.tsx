@@ -30,6 +30,10 @@ export default function Login() {
         result.user?.email
       )
 
+      setErr(
+        `Login correcto. Usuario: ${result.user?.email || 'sin email'}`
+      )
+
       if (!result.session) {
         throw new Error(
           'Supabase no creó una sesión.'

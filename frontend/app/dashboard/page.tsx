@@ -107,8 +107,6 @@ export default function Dashboard() {
   async function logout() {
     await supabase.auth.signOut()
 
-    localStorage.removeItem('chrvm_access')
-    localStorage.removeItem('chrvm_refresh')
 
     router.replace('/login')
   }

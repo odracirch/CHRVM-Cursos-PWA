@@ -25,7 +25,6 @@ type Lesson = {
   id: string
   title: string
   module_id: string
-  course_id: string
   position?: number
 }
 
@@ -126,9 +125,13 @@ export default function CursoPage() {
         } = await supabase
           .from('lessons')
           .select(
-            'id, title, module_id, course_id, position'
+            'id, title, module_id, position'
           )
-          .eq('course_id', courseId)
+          .in(
+            'module_id',
+            (moduleData || []).map((module) => module.id)
+          )
+          .eq('published', true)
           .order('position', {
             ascending: true,
           })
@@ -138,16 +141,7 @@ export default function CursoPage() {
             'Error al cargar lecciones:',
             lessonError
           )
-          if (mounted) {
-            setError(
-              `Error al cargar lecciones: ${lessonError.message}`
-            )
-          }
         } else if (mounted) {
-          console.log(
-            'LECCIONES SUPABASE:',
-            lessonData
-          )
           setLessons(lessonData || [])
         }
 

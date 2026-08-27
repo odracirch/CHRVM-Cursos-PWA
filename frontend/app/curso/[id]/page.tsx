@@ -138,7 +138,16 @@ export default function CursoPage() {
             'Error al cargar lecciones:',
             lessonError
           )
+          if (mounted) {
+            setError(
+              `Error al cargar lecciones: ${lessonError.message}`
+            )
+          }
         } else if (mounted) {
+          console.log(
+            'LECCIONES SUPABASE:',
+            lessonData
+          )
           setLessons(lessonData || [])
         }
 

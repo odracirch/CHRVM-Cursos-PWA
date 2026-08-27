@@ -19,7 +19,10 @@ export async function api(
   }
 
   if (session?.access_token) {
-    headers.set('Authorization', `Bearer ${session.access_token}`)
+    headers.set(
+      'Authorization',
+      `Bearer ${session.access_token}`
+    )
   }
 
   const res = await fetch(`${API}${path}`, {
@@ -33,42 +36,66 @@ export async function api(
 
     try {
       const data = await res.json()
-      message = data.detail || JSON.stringify(data)
+      message =
+        data.detail ||
+        JSON.stringify(data)
     } catch {
-      message = `Error de API (${res.status})`
+      message =
+        `Error de API (${res.status})`
     }
 
     throw new Error(message)
   }
 
-  return res.status === 204 ? null : res.json()
+  return res.status === 204
+    ? null
+    : res.json()
 }
 
 export async function login(
   email: string,
   password: string
 ) {
-  const { data, error } =
-    await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+  const {
+    data,
+    error,
+  } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  })
 
   if (error) {
-    throw new Error(error.message)
+    console.error(
+      'SUPABASE LOGIN ERROR:',
+      error
+    )
+
+    throw new Error(
+      error.message
+    )
   }
 
   if (!data.session) {
-    throw new Error('No se pudo crear la sesión.')
+    throw new Error(
+      'Supabase no creó una sesión.'
+    )
   }
+
+  console.log(
+    'SUPABASE LOGIN OK:',
+    data.user?.email
+  )
 
   return data
 }
 
 export async function logout() {
-  const { error } = await supabase.auth.signOut()
+  const { error } =
+    await supabase.auth.signOut()
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(
+      error.message
+    )
   }
 }

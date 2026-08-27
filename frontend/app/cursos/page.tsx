@@ -3,11 +3,31 @@ import { supabase } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
-export default async function CursosPage() {
-  const { data: cursos, error } = await supabase
+export default async function CursosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ categoria?: string }>
+}) {
+  const { categoria } = await searchParams
+  const { data: categorias } = await supabase
+    .from('courses_category')
+    .select('id, name, slug')
+    .order('name', { ascending: true })
+
+  const categoriaSeleccionada = categoria
+    ? (categorias ?? []).find((item) => item.slug === categoria)
+    : null
+
+  let cursosQuery = supabase
     .from('courses')
-    .select('id, title, slug, description, image_url, published')
+    .select('id, title, slug, description, image_url, published, category_id')
     .eq('published', true)
+
+  if (categoriaSeleccionada) {
+    cursosQuery = cursosQuery.eq('category_id', categoriaSeleccionada.id)
+  }
+
+  const { data: cursos, error } = await cursosQuery
     .order('created_at', { ascending: true })
 
   if (error) {
@@ -20,6 +40,10 @@ export default async function CursosPage() {
       </main>
     )
   }
+
+    const categoriasMap = new Map(
+      (categorias ?? []).map((categoria) => [categoria.id, categoria.name])
+    )
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-12">
@@ -49,7 +73,34 @@ export default async function CursosPage() {
         </Link>
       </div>
 
-      {cursos && cursos.length === 0 ? (
+              <div className="flex flex-wrap gap-3 mb-8">
+          <Link
+            href="/cursos"
+            className={`rounded-xl px-4 py-2 font-semibold transition ${
+              !categoria
+                ? 'bg-blue-600 text-white'
+                : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            Todas
+          </Link>
+
+          {(categorias ?? []).map((item) => (
+            <Link
+              key={item.id}
+              href={`/cursos?categoria=${item.slug}`}
+              className={`rounded-xl px-4 py-2 font-semibold transition ${
+                categoria === item.slug
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </div>
+
+        {cursos && cursos.length === 0 ? (
         <div className="border border-slate-200 rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bold">
             No hay cursos publicados
@@ -84,7 +135,10 @@ export default async function CursosPage() {
 
               <div className="p-6">
                 <span className="text-sm text-blue-600 font-semibold">
-                  Curso
+                    {curso.category_id
+                      ? categoriasMap.get(curso.category_id) ?? 'Sin categoría'
+                      : 'Sin categoría'}
+
                 </span>
 
                 <h2 className="text-2xl font-bold mt-2">

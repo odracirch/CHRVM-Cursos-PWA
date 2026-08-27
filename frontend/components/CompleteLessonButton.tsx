@@ -2,27 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { api } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 
 type Props = {
   lessonId: string
-  djangoLessonId: number
   courseId: string
-}
-
-type ProgressResponse = {
-  lesson: number | string
-  progress_percentage: number
-}
-
-type ProgressItem = {
-  lesson: number | string
-  completed: boolean
 }
 
 export default function CompleteLessonButton({
   lessonId,
-  djangoLessonId,
   courseId,
 }: Props) {
   const [loading, setLoading] = useState(false)
@@ -30,33 +18,100 @@ export default function CompleteLessonButton({
   const [progress, setProgress] = useState<number | null>(null)
   const [message, setMessage] = useState('')
 
+  async function loadProgress() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    const { data: current } = await supabase
+      .from('lesson_progress')
+      .select('completed')
+      .eq('user_id', user.id)
+      .eq('lesson_id', lessonId)
+      .maybeSingle()
+
+    setCompleted(!!current?.completed)
+
+    const { data: modules } = await supabase
+      .from('modules')
+      .select('id')
+      .eq('course_id', courseId)
+
+    const moduleIds = modules?.map((m) => m.id) ?? []
+
+    if (!moduleIds.length) {
+      setProgress(0)
+      return
+    }
+
+    const { data: lessons } = await supabase
+      .from('lessons')
+      .select('id')
+      .in('module_id', moduleIds)
+      .eq('published', true)
+
+    const lessonIds = lessons?.map((l) => l.id) ?? []
+
+    if (!lessonIds.length) {
+      setProgress(0)
+      return
+    }
+
+    const { data: completedLessons } = await supabase
+      .from('lesson_progress')
+      .select('lesson_id')
+      .eq('user_id', user.id)
+      .eq('completed', true)
+      .in('lesson_id', lessonIds)
+
+    const percentage = Math.round(
+      ((completedLessons?.length ?? 0) / lessonIds.length) * 100
+    )
+
+    setProgress(percentage)
+  }
+
   async function markCompleted() {
     setLoading(true)
     setMessage('')
 
     try {
-      const response = (await api('/api/progress/complete/', {
-        method: 'POST',
-        body: JSON.stringify({
-          lesson: djangoLessonId,
-        }),
-      })) as ProgressResponse
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-      const currentProgress =
-        Number(response.progress_percentage) || 0
+      if (!user) {
+        throw new Error('Debes iniciar sesión.')
+      }
 
-      setProgress(currentProgress)
+      const { error } = await supabase
+        .from('lesson_progress')
+        .upsert(
+          {
+            user_id: user.id,
+            lesson_id: lessonId,
+            completed: true,
+            completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'user_id,lesson_id',
+          }
+        )
+
+      if (error) throw error
+
+      await loadProgress()
+
       setCompleted(true)
 
-      if (currentProgress >= 100) {
-        setMessage(
-          '¡Felicidades! Has completado el curso y se generó tu certificado.'
-        )
-      } else {
-        setMessage(
-          `Lección completada. Tu progreso es ${currentProgress}%.`
-        )
-      }
+      setMessage(
+        progress !== null && progress >= 100
+          ? '¡Felicidades! Has completado el curso.'
+          : 'Lección completada correctamente.'
+      )
     } catch (error) {
       console.error(error)
 
@@ -71,30 +126,8 @@ export default function CompleteLessonButton({
   }
 
   useEffect(() => {
-    async function checkProgress() {
-      try {
-        const data = await api('/api/progress/')
-
-        if (!Array.isArray(data)) return
-
-        const current = data.find(
-          (item: ProgressItem) =>
-            String(item.lesson) === String(djangoLessonId)
-        )
-
-        if (current?.completed) {
-          setCompleted(true)
-        }
-      } catch (error) {
-        console.error(
-          'No se pudo consultar el progreso:',
-          error
-        )
-      }
-    }
-
-    checkProgress()
-  }, [djangoLessonId])
+    loadProgress()
+  }, [lessonId, courseId])
 
   return (
     <div className="mt-8">
@@ -111,15 +144,14 @@ export default function CompleteLessonButton({
       </button>
 
       {message && (
-        <p
-          className={`font-semibold mt-3 ${
-            message.toLowerCase().includes('error') ||
-            message.toLowerCase().includes('no se')
-              ? 'text-red-600'
-              : 'text-green-600'
-          }`}
-        >
+        <p className="font-semibold mt-3 text-green-600">
           {message}
+        </p>
+      )}
+
+      {progress !== null && (
+        <p className="text-slate-500 mt-3">
+          Progreso del curso: {progress}%
         </p>
       )}
 
@@ -131,14 +163,6 @@ export default function CompleteLessonButton({
           🏆 Ver mi certificado
         </Link>
       )}
-
-      {completed &&
-        progress !== null &&
-        progress < 100 && (
-          <p className="text-slate-500 mt-3 text-sm">
-            Continúa con la siguiente lección para aumentar tu progreso.
-          </p>
-        )}
     </div>
   )
 }

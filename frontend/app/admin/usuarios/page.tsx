@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import AuthGuard from '@/components/AuthGuard'
+import AdminBackButton from '@/components/AdminBackButton'
 import { supabase } from '@/lib/supabase'
 
 type Profile = {
@@ -49,6 +50,10 @@ export default function Page() {
   return (
     <AuthGuard roles={['admin']}>
       <div className="max-w-6xl mx-auto px-4 py-10">
+        <div className="mb-5">
+          <AdminBackButton />
+        </div>
+
         <div className="card p-7">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>

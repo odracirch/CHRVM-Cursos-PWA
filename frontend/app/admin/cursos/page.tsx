@@ -1,6 +1,7 @@
 'use client'
 
 import AuthGuard from '@/components/AuthGuard'
+import AdminBackButton from '@/components/AdminBackButton'
 import { supabase } from '@/lib/supabase'
 import { FormEvent, useEffect, useState } from 'react'
 
@@ -170,6 +171,10 @@ export default function Page() {
   return (
     <AuthGuard roles={['admin']}>
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
+        <div>
+          <AdminBackButton />
+        </div>
+
 
         <div>
           <h1 className="text-3xl font-black">

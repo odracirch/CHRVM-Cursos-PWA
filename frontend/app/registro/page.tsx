@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { api, login } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 
 export default function Register() {
   const [v, setV] = useState({
@@ -27,20 +27,29 @@ export default function Register() {
     setLoading(true)
 
     try {
-      await api('/api/auth/register/', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: v.email,
-          first_name: v.first_name,
-          last_name: v.last_name,
-          password: v.password,
-        }),
+      const { data, error } = await supabase.auth.signUp({
+        email: v.email,
+        password: v.password,
+        options: {
+          data: {
+            first_name: v.first_name,
+            last_name: v.last_name,
+          },
+        },
       })
 
-      // Iniciar sesión automáticamente con Django
-      await login(v.email, v.password)
+      if (error) {
+        throw new Error(error.message)
+      }
 
-      router.push('/dashboard')
+      if (data.session) {
+        router.push('/dashboard')
+        return
+      }
+
+      setMsg(
+        'Cuenta creada. Revisa tu correo electrónico para confirmar tu cuenta.'
+      )
     } catch (error) {
       setErr(
         error instanceof Error

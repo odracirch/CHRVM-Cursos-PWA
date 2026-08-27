@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabase'
+
 export const API =
   process.env.NEXT_PUBLIC_API_URL ||
   'https://chrvm-cursos-backend.onrender.com'
@@ -6,10 +8,9 @@ export async function api(
   path: string,
   options: RequestInit = {}
 ) {
-  const token =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('chrvm_access')
-      : null
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
   const headers = new Headers(options.headers)
 
@@ -17,8 +18,8 @@ export async function api(
     headers.set('Content-Type', 'application/json')
   }
 
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
+  if (session?.access_token) {
+    headers.set('Authorization', `Bearer ${session.access_token}`)
   }
 
   const res = await fetch(`${API}${path}`, {
@@ -27,28 +28,14 @@ export async function api(
     cache: 'no-store',
   })
 
-  if (res.status === 401) {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('chrvm_access')
-      localStorage.removeItem('chrvm_refresh')
-    }
-
-    throw new Error(
-      'Sesión expirada. Inicia sesión nuevamente.'
-    )
-  }
-
   if (!res.ok) {
     let message = `Error de API (${res.status})`
 
     try {
       const data = await res.json()
-
-      message =
-        data.detail ||
-        JSON.stringify(data)
-    } catch (e) {
-      message = `Error de API (${res.status}) - respuesta no JSON`
+      message = data.detail || JSON.stringify(data)
+    } catch {
+      message = `Error de API (${res.status})`
     }
 
     throw new Error(message)
@@ -61,23 +48,27 @@ export async function login(
   email: string,
   password: string
 ) {
-  const response = await api('/api/auth/login/', {
-    method: 'POST',
-    body: JSON.stringify({
+  const { data, error } =
+    await supabase.auth.signInWithPassword({
       email,
       password,
-    }),
-  })
+    })
 
-  localStorage.setItem(
-    'chrvm_access',
-    response.access
-  )
+  if (error) {
+    throw new Error(error.message)
+  }
 
-  localStorage.setItem(
-    'chrvm_refresh',
-    response.refresh
-  )
+  if (!data.session) {
+    throw new Error('No se pudo crear la sesión.')
+  }
 
-  return response
+  return data
+}
+
+export async function logout() {
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    throw new Error(error.message)
+  }
 }

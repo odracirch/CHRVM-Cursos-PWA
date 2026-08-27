@@ -94,6 +94,23 @@ export default function CompleteLessonButton({
 
     setProgress(percentage)
 
+    const { error: enrollmentError } = await supabase
+      .from('enrollments')
+      .update({
+        progress_percentage: percentage,
+        completed: percentage >= 100,
+      })
+      .eq('user_id', user.id)
+      .eq('course_id', courseId)
+
+    if (enrollmentError) {
+      console.error(
+        'Error actualizando inscripción:',
+        enrollmentError
+      )
+      return
+    }
+
     if (percentage >= 100) {
       await createCertificate(user.id)
     }

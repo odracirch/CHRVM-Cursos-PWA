@@ -30,18 +30,37 @@ export default function Login() {
         throw new Error(error.message)
       }
 
-      if (!data.session) {
+      if (!data.session || !data.user) {
         throw new Error(
           'Supabase no creó una sesión.'
         )
       }
 
+      const { data: profile, error: profileError } =
+        await supabase
+          .from('profiles')
+          .select('rol')
+          .eq('id', data.user.id)
+          .maybeSingle()
+
+      if (profileError) {
+        throw new Error(profileError.message)
+      }
+
       console.log(
         'LOGIN COMPLETO:',
-        data.user?.email
+        data.user.email,
+        'ROL:',
+        profile?.rol
       )
 
-      router.replace('/dashboard')
+      if (profile?.rol === 'admin') {
+        router.replace('/admin')
+      } else if (profile?.rol === 'instructor') {
+        router.replace('/instructor')
+      } else {
+        router.replace('/dashboard')
+      }
     } catch (error) {
       console.error(
         'ERROR EN LOGIN:',

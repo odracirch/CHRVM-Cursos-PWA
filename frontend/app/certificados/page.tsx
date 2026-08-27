@@ -3,22 +3,24 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AuthGuard from '@/components/AuthGuard'
-import { api } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 
 type Certificate = {
-  id: number
-  student_name: string
-  course_title: string
+  id: string
+  user_id: string
+  course_id: string
   folio: string
-  issue_date: string
-  percentage: number
-  hours: number
-  pdf_file: string | null
-  verification_code: string
+  issued_at: string | null
+}
+
+type Course = {
+  id: string
+  title: string
 }
 
 function CertificatesContent() {
   const [certificates, setCertificates] = useState<Certificate[]>([])
+  const [courses, setCourses] = useState<Record<string, Course>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -28,15 +30,48 @@ function CertificatesContent() {
         setLoading(true)
         setError('')
 
-        const response = await api('/api/certificates/')
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser()
 
-        const data = Array.isArray(response)
-          ? response
-          : response?.results ?? []
+        if (userError) throw userError
 
-        setCertificates(data)
+        if (!user) {
+          setCertificates([])
+          return
+        }
+
+        const { data, error: certificateError } = await supabase
+          .from('certificates')
+          .select('id, user_id, course_id, folio, issued_at')
+          .eq('user_id', user.id)
+          .order('issued_at', { ascending: false })
+
+        if (certificateError) throw certificateError
+
+        setCertificates(data || [])
+
+        if (data && data.length > 0) {
+          const courseIds = [...new Set(data.map((c) => c.course_id))]
+
+          const { data: courseData, error: courseError } = await supabase
+            .from('courses')
+            .select('id, title')
+            .in('id', courseIds)
+
+          if (courseError) throw courseError
+
+          const map: Record<string, Course> = {}
+
+          for (const course of courseData || []) {
+            map[course.id] = course
+          }
+
+          setCourses(map)
+        }
       } catch (err) {
-        console.error(err)
+        console.error('Error cargando certificados:', err)
 
         setError(
           err instanceof Error
@@ -66,7 +101,7 @@ function CertificatesContent() {
         </h1>
 
         <p className="text-slate-600 mt-2">
-          Consulta y descarga los certificados de los cursos que has completado.
+          Consulta tus certificados de los cursos completados.
         </p>
       </div>
 
@@ -116,13 +151,16 @@ function CertificatesContent() {
       {!loading && !error && certificates.length > 0 && (
         <div className="grid md:grid-cols-2 gap-6 mt-10">
           {certificates.map((certificate) => {
-            const issueDate = new Date(
-              certificate.issue_date
-            ).toLocaleDateString('es-MX', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })
+            const issueDate = certificate.issued_at
+              ? new Date(certificate.issued_at).toLocaleDateString(
+                  'es-MX',
+                  {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  }
+                )
+              : 'Sin fecha'
 
             return (
               <article
@@ -139,7 +177,8 @@ function CertificatesContent() {
                   </p>
 
                   <h2 className="text-2xl font-black mt-2">
-                    {certificate.course_title}
+                    {courses[certificate.course_id]?.title ||
+                      'Curso'}
                   </h2>
 
                   <p className="text-slate-300 mt-3">
@@ -149,16 +188,6 @@ function CertificatesContent() {
 
                 <div className="p-6">
                   <div className="space-y-3 text-sm">
-                    <div className="flex justify-between gap-4">
-                      <span className="text-slate-500">
-                        Alumno
-                      </span>
-
-                      <span className="font-semibold text-right">
-                        {certificate.student_name}
-                      </span>
-                    </div>
-
                     <div className="flex justify-between gap-4">
                       <span className="text-slate-500">
                         Folio
@@ -178,45 +207,14 @@ function CertificatesContent() {
                         {issueDate}
                       </span>
                     </div>
-
-                    <div className="flex justify-between gap-4">
-                      <span className="text-slate-500">
-                        Porcentaje
-                      </span>
-
-                      <span className="font-semibold text-green-600">
-                        {certificate.percentage}%
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between gap-4">
-                      <span className="text-slate-500">
-                        Duración
-                      </span>
-
-                      <span className="font-semibold">
-                        {certificate.hours} horas
-                      </span>
-                    </div>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 gap-3 mt-7">
-                    {certificate.pdf_file && (
-                      <a
-                        href={certificate.pdf_file}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-center bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl font-semibold"
-                      >
-                        📄 Ver certificado
-                      </a>
-                    )}
-
+                  <div className="mt-7">
                     <Link
                       href={`/verificar-certificado/${certificate.folio}`}
-                      className="text-center border border-slate-300 hover:bg-slate-50 px-4 py-3 rounded-xl font-semibold"
+                      className="block text-center border border-slate-300 hover:bg-slate-50 px-4 py-3 rounded-xl font-semibold"
                     >
-                      🔎 Verificar
+                      🔎 Verificar certificado
                     </Link>
                   </div>
                 </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { api } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 
 export default function AuthGuard({
   children,
@@ -12,39 +12,83 @@ export default function AuthGuard({
   roles?: string[]
 }) {
   const [ok, setOk] = useState(false)
+  const [checking, setChecking] = useState(true)
+
   const router = useRouter()
 
   useEffect(() => {
     let active = true
 
     async function checkSession() {
-      const token = localStorage.getItem('chrvm_access')
+      setChecking(true)
 
-      if (!token) {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser()
+
+      if (error || !user) {
+        if (active) {
+          setOk(false)
+          setChecking(false)
+        }
+
         router.replace('/login')
         return
       }
 
-      try {
-        const profile = await api('/api/auth/profile/')
+      const {
+        data: profile,
+        error: profileError,
+      } = await supabase
+        .from('profiles')
+        .select('rol, activo')
+        .eq('id', user.id)
+        .single()
 
-        if (
-          roles &&
-          roles.length > 0 &&
-          !roles.includes(profile.role)
-        ) {
-          router.replace('/dashboard')
-          return
-        }
+      if (profileError || !profile) {
+        console.error(
+          'Error obteniendo perfil:',
+          profileError
+        )
 
         if (active) {
-          setOk(true)
+          setOk(false)
+          setChecking(false)
         }
-      } catch (error) {
-        console.error(error)
-        localStorage.removeItem('chrvm_access')
-        localStorage.removeItem('chrvm_refresh')
+
         router.replace('/login')
+        return
+      }
+
+      if (profile.activo === false) {
+        if (active) {
+          setOk(false)
+          setChecking(false)
+        }
+
+        await supabase.auth.signOut()
+        router.replace('/login')
+        return
+      }
+
+      if (
+        roles &&
+        roles.length > 0 &&
+        !roles.includes(profile.rol)
+      ) {
+        if (active) {
+          setOk(false)
+          setChecking(false)
+        }
+
+        router.replace('/dashboard')
+        return
+      }
+
+      if (active) {
+        setOk(true)
+        setChecking(false)
       }
     }
 
@@ -55,7 +99,7 @@ export default function AuthGuard({
     }
   }, [router, roles])
 
-  if (!ok) {
+  if (checking || !ok) {
     return (
       <div className="max-w-4xl mx-auto p-10 text-center">
         Verificando sesión...

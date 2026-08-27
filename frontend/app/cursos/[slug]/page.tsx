@@ -18,7 +18,7 @@ export default async function CursoPage({
   const { data: curso, error } = await supabase
     .from('courses')
     .select(
-      'id, title, slug, description, image_url, published'
+      'id, title, slug, description, image_url, published, category_id'
     )
     .eq('slug', slug)
     .maybeSingle()
@@ -70,6 +70,18 @@ export default async function CursoPage({
     )
   }
 
+    let categoria = null
+
+    if (curso.category_id) {
+      const { data } = await supabase
+        .from("courses_category")
+        .select("id, name, slug")
+        .eq("id", curso.category_id)
+        .maybeSingle()
+
+      categoria = data
+    }
+
   let enrolled = false
 
   if (user) {
@@ -109,7 +121,8 @@ export default async function CursoPage({
         <div className="p-8">
 
           <span className="text-blue-600 font-semibold">
-            Curso
+            {categoria?.name ?? 'Sin categoría'}
+
           </span>
 
           <h1 className="text-4xl font-black mt-2">

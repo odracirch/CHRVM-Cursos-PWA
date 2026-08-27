@@ -12,6 +12,7 @@ type Course = {
   description: string | null
   image_url: string | null
   published: boolean
+  category_id: string | number | null
 }
 
 type Module = {
@@ -41,6 +42,7 @@ export default function CursoPage() {
   const courseId = String(params.id)
 
   const [course, setCourse] = useState<Course | null>(null)
+  const [categoryName, setCategoryName] = useState('')
   const [modules, setModules] = useState<Module[]>([])
   const [lessons, setLessons] = useState<Lesson[]>([])
 
@@ -68,7 +70,7 @@ export default function CursoPage() {
         } = await supabase
           .from('courses')
           .select(
-            'id, title, slug, description, image_url, published'
+            'id, title, slug, description, image_url, published, category_id'
           )
           .eq('id', courseId)
           .eq('published', true)
@@ -90,6 +92,23 @@ export default function CursoPage() {
         }
 
         setCourse(courseData)
+
+          if (courseData.category_id) {
+            const {
+              data: categoryData,
+              error: categoryError,
+            } = await supabase
+              .from("courses_category")
+              .select("name")
+              .eq("id", courseData.category_id)
+              .maybeSingle()
+
+            if (categoryError) {
+              console.error("Error al cargar categoría:", categoryError)
+            } else if (mounted) {
+              setCategoryName(categoryData?.name ?? "")
+            }
+          }
 
         /*
          * 2. Obtener módulos.
@@ -348,7 +367,8 @@ export default function CursoPage() {
         <div className="p-8 md:p-10">
 
           <span className="text-blue-600 font-semibold">
-            Curso
+            {categoryName || "Sin categoría"}
+
           </span>
 
           <h1 className="text-4xl md:text-5xl font-black mt-2">

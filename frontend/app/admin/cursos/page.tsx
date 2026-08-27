@@ -12,9 +12,15 @@ type Course = {
   description: string | null
   image_url: string | null
   instructor_id: string | null
+  category_id: number | null
   published: boolean | null
   created_at: string | null
   updated_at: string | null
+}
+
+type Category = {
+  id: number
+  name: string
 }
 
 const emptyForm = {
@@ -22,11 +28,13 @@ const emptyForm = {
   slug: '',
   description: '',
   image_url: '',
+  category_id: '',
   published: true,
 }
 
 export default function Page() {
   const [courses, setCourses] = useState<Course[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -53,14 +61,31 @@ export default function Page() {
     setLoading(false)
   }
 
+  async function loadCategories() {
+    const { data, error } = await supabase
+      .from('courses_category')
+      .select('id, name')
+      .order('name', { ascending: true })
+
+    if (error) {
+      console.error(error)
+      setError(error.message)
+      setCategories([])
+    } else {
+      setCategories(data ?? [])
+    }
+  }
+
   useEffect(() => {
     loadCourses()
+    loadCategories()
   }, [])
 
   function startCreate() {
     setEditingId(null)
-    setForm(emptyForm)
+    setForm({ ...emptyForm })
     setError('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function startEdit(course: Course) {
@@ -70,6 +95,7 @@ export default function Page() {
       slug: course.slug,
       description: course.description ?? '',
       image_url: course.image_url ?? '',
+      category_id: course.category_id?.toString() ?? '',
       published: course.published ?? false,
     })
     setError('')
@@ -98,6 +124,7 @@ export default function Page() {
       slug: form.slug.trim(),
       description: form.description.trim() || null,
       image_url: form.image_url.trim() || null,
+      category_id: form.category_id ? Number(form.category_id) : null,
       published: form.published,
     }
 
@@ -248,6 +275,30 @@ export default function Page() {
                 required
               />
             </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Categoría
+                </label>
+
+                <select
+                  value={form.category_id}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      category_id: event.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white"
+                >
+                  <option value="">Sin categoría</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
             <div>
               <label className="block text-sm font-semibold mb-2">

@@ -103,7 +103,7 @@ export default function AuthGuard({
     return () => {
       active = false
     }
-  }, [router, roles])
+  }, [router])
 
   if (checking || !ok) {
     return (

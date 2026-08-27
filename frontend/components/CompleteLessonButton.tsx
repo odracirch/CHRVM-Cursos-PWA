@@ -17,7 +17,6 @@ export default function CompleteLessonButton({
   const [completed, setCompleted] = useState(false)
   const [progress, setProgress] = useState<number | null>(null)
   const [message, setMessage] = useState('')
-  const [certificateCreated, setCertificateCreated] = useState(false)
 
   async function loadProgress() {
     const {
@@ -111,56 +110,8 @@ export default function CompleteLessonButton({
       return
     }
 
-    if (percentage >= 100) {
-      await createCertificate(user.id)
-    }
   }
 
-  async function createCertificate(userId: string) {
-    const { data: existing, error: existingError } =
-      await supabase
-        .from('certificates')
-        .select('id, folio')
-        .eq('user_id', userId)
-        .eq('course_id', courseId)
-        .maybeSingle()
-
-    if (existingError) {
-      console.error(
-        'Error comprobando certificado:',
-        existingError
-      )
-      return
-    }
-
-    if (existing) {
-      setCertificateCreated(true)
-      return
-    }
-
-    const folio =
-      `CHRVM-${courseId.slice(0, 8).toUpperCase()}-` +
-      `${Date.now().toString(36).toUpperCase()}`
-
-    const { error: certificateError } = await supabase
-      .from('certificates')
-      .insert({
-        user_id: userId,
-        course_id: courseId,
-        folio,
-        issued_at: new Date().toISOString(),
-      })
-
-    if (certificateError) {
-      console.error(
-        'Error creando certificado:',
-        certificateError
-      )
-      return
-    }
-
-    setCertificateCreated(true)
-  }
 
   async function markCompleted() {
     setLoading(true)
@@ -242,22 +193,16 @@ export default function CompleteLessonButton({
         </p>
       )}
 
-      {progress !== null && progress >= 100 && (
-        <div className="mt-5">
-          {certificateCreated && (
-            <p className="text-green-600 font-semibold mb-3">
-              🏆 Certificado generado correctamente.
-            </p>
-          )}
-
-          <Link
-            href="/certificados"
-            className="inline-block bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
-          >
-            🏆 Ver mi certificado
-          </Link>
-        </div>
-      )}
+        {progress !== null && progress >= 100 && (
+          <div className="mt-5">
+            <Link
+              href={`/curso/${courseId}/evaluacion`}
+              className="inline-block bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
+            >
+              📝 Presentar evaluación final
+            </Link>
+          </div>
+        )}
     </div>
   )
 }

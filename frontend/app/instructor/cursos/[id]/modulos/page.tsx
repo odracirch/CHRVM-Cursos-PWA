@@ -41,41 +41,68 @@ export default function Page() {
     setLoading(true)
     setError('')
 
-    const { data: courseData, error: courseError } = await supabase
-      .from('courses')
-      .select('id, title')
-      .eq('id', courseId)
-      .single()
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
 
-    if (courseError) {
-      console.error(courseError)
-      setError(courseError.message)
-      setCourse(null)
-      setLoading(false)
-      return
-    }
+      if (userError || !user) {
+        setError('No se pudo identificar al usuario autenticado.')
+        setCourse(null)
+        setModules([])
+        return
+      }
 
-    setCourse(courseData)
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select('id, title')
+        .eq('id', courseId)
+        .eq('instructor_id', user.id)
+        .single()
 
-    const { data: moduleData, error: moduleError } = await supabase
-      .from('modules')
-      .select('id, course_id, title, description, position')
-      .eq('course_id', courseId)
-      .order('position', { ascending: true })
+      if (courseError) {
+        console.error(courseError)
+        setError(courseError.message)
+        setCourse(null)
+        setModules([])
+        return
+      }
 
-    if (moduleError) {
-      console.error(moduleError)
-      setError(moduleError.message)
-      setModules([])
-    } else {
+      setCourse(courseData)
+
+      const { data: moduleData, error: moduleError } = await supabase
+        .from('modules')
+        .select('id, course_id, title, description, position')
+        .eq('course_id', courseId)
+        .order('position', { ascending: true })
+
+      if (moduleError) {
+        console.error(moduleError)
+        setError(moduleError.message)
+        setModules([])
+        return
+      }
+
       setModules(moduleData ?? [])
+    } catch (err) {
+      console.error(err)
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'No se pudo cargar el curso.'
+      )
+      setCourse(null)
+      setModules([])
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
-    if (courseId) loadData()
+    if (courseId) {
+      loadData()
+    }
   }, [courseId])
 
   function startCreate() {
@@ -127,6 +154,7 @@ export default function Page() {
       description: form.description.trim() || null,
       position,
     }
+
 
     const result = editingId
       ? await supabase
@@ -294,7 +322,7 @@ export default function Page() {
 
             <button
               type="submit"
-              disabled={saving || !course}
+              disabled={saving || loading || !course}
               className="px-5 py-3 rounded-xl bg-slate-900 text-white font-bold disabled:opacity-50"
             >
               {saving

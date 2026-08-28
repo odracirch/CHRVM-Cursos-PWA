@@ -2,3 +2,6 @@
 
 # TypeScript build cache
 tsconfig.tsbuildinfo
+
+# Respaldos temporales locales
+.tmp-backups/

@@ -155,6 +155,33 @@ export default function Page() {
     await loadData()
     setSaving(false)
   }
+  async function togglePublished(evaluation: Evaluation) {
+    const nextPublished = !evaluation.published
+    const action = nextPublished ? 'publicar' : 'ocultar'
+
+    const confirmed = window.confirm(
+      `¿Quieres ${action} la evaluación "${evaluation.title}"?`,
+    )
+
+    if (!confirmed) return
+
+    setError('')
+
+    const { error } = await supabase
+      .from('evaluations')
+      .update({ published: nextPublished })
+      .eq('id', evaluation.id)
+      .eq('course_id', courseId)
+
+    if (error) {
+      console.error(error)
+      setError(error.message)
+      return
+    }
+
+    await loadData()
+  }
+
 
   async function deleteEvaluation(evaluation: Evaluation) {
     const confirmed = window.confirm(
@@ -377,6 +404,15 @@ export default function Page() {
                         <h3 className="text-lg font-bold">
                           {evaluation.title}
                         </h3>
+                          <span
+                            className={
+                              evaluation.published
+                                ? 'bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold'
+                                : 'bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold'
+                            }
+                          >
+                            {evaluation.published ? 'Publicado' : 'Borrador'}
+                          </span>
 
 
                       </div>
@@ -393,7 +429,18 @@ export default function Page() {
                       )}
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-3">                          <button
+                            type="button"
+                            onClick={() => togglePublished(evaluation)}
+                            className={
+                              evaluation.published
+                                ? 'bg-amber-500 hover:bg-amber-600 text-white px-5 py-3 rounded-xl font-semibold'
+                                : 'bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold'
+                            }
+                          >
+                            {evaluation.published ? 'Ocultar' : 'Publicar'}
+                          </button>
+
                       <button
                         type="button"
                         onClick={() => startEdit(evaluation)}

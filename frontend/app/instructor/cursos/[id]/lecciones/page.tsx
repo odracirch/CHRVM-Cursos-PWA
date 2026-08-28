@@ -216,6 +216,31 @@ export default function Page() {
     setSaving(false)
   }
 
+  async function togglePublished(lesson: Lesson) {
+    const confirmed = window.confirm(
+      lesson.published
+        ? `¿Quieres ocultar la lección "${lesson.title}"? Dejará de estar visible para los alumnos.`
+        : `¿Quieres publicar la lección "${lesson.title}"? Será visible para los alumnos.`,
+    )
+
+    if (!confirmed) return
+
+    setError('')
+
+    const { error } = await supabase
+      .from('lessons')
+      .update({ published: !lesson.published })
+      .eq('id', lesson.id)
+
+    if (error) {
+      console.error(error)
+      setError(error.message)
+      return
+    }
+
+    await loadData()
+  }
+
   async function deleteLesson(lesson: Lesson) {
     const confirmed = window.confirm(
       `¿Eliminar la lección "${lesson.title}"? Esta acción no se puede deshacer.`
@@ -529,7 +554,14 @@ export default function Page() {
                     <div className="flex flex-wrap gap-3">
                       <button
                         type="button"
-                        onClick={() => startEdit(lesson)}
+                        onClick={() => togglePublished(lesson)}
+                                      className={lesson.published ? "bg-amber-500 hover:bg-amber-600 text-white px-5 py-3 rounded-xl font-semibold" : "bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold"}
+                                    >
+                                      {lesson.published ? "Ocultar" : "Publicar"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => startEdit(lesson)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-semibold"
                       >
                         Editar

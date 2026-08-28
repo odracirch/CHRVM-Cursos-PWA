@@ -9,6 +9,7 @@ import { FormEvent, useEffect, useState } from 'react'
 type Course = {
   id: string
   title: string
+  published: boolean
 }
 
 type Module = {
@@ -56,7 +57,7 @@ export default function Page() {
 
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
-        .select('id, title')
+        .select('id, title, published')
         .eq('id', courseId)
         .eq('instructor_id', user.id)
         .single()
@@ -178,6 +179,51 @@ export default function Page() {
     setSaving(false)
   }
 
+  async function toggleCoursePublished() {
+    if (!course) return
+
+    const nextPublished = !course.published
+
+    const confirmed = window.confirm(
+      nextPublished
+        ? '¿Quieres publicar este curso? Los alumnos podrán verlo.'
+        : '¿Quieres ocultar este curso? Dejará de estar visible para los alumnos.'
+    )
+
+    if (!confirmed) return
+
+    setSaving(true)
+    setError('')
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      setError('No se pudo identificar al usuario autenticado.')
+      setSaving(false)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('courses')
+      .update({ published: nextPublished })
+      .eq('id', courseId)
+      .eq('instructor_id', user.id)
+      .select('id, title, published')
+      .single()
+
+    if (error) {
+      console.error(error)
+      setError(error.message)
+      setSaving(false)
+      return
+    }
+
+    setCourse(data)
+    setSaving(false)
+  }
+
   async function deleteModule(module: Module) {
     const confirmed = window.confirm(
       `¿Eliminar el módulo "${module.title}"? Esta acción no se puede deshacer.`
@@ -226,6 +272,39 @@ export default function Page() {
           <p className="text-slate-600 mt-2">
             Crea, edita y organiza los módulos de este curso.
           </p>
+
+            {course && (
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <span
+                  className={
+                    course.published
+                      ? 'bg-green-100 text-green-700 px-4 py-2 rounded-xl font-semibold'
+                      : 'bg-amber-100 text-amber-700 px-4 py-2 rounded-xl font-semibold'
+                  }
+                >
+                  {course.published
+                    ? '🟢 Curso publicado'
+                    : '🟡 Curso no publicado'}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={toggleCoursePublished}
+                  disabled={saving || loading}
+                  className={
+                    course.published
+                      ? 'bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl font-semibold disabled:opacity-50'
+                      : 'bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold disabled:opacity-50'
+                  }
+                >
+                  {saving
+                    ? 'Guardando...'
+                    : course.published
+                      ? 'Ocultar curso'
+                      : 'Publicar curso'}
+                </button>
+              </div>
+            )}
         </div>
 
         <div className="card p-7">

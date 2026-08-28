@@ -402,7 +402,13 @@ export default function Page() {
                         Editar
                       </button>
 
-                      <button
+                      <Link
+                                           href={`/instructor/cursos/${courseId}/evaluaciones/${evaluation.id}`}
+                                           className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold"
+                                       >
+                                                 Preguntas
+                                       </Link>
+                                       <button
                         type="button"
                         onClick={() => deleteEvaluation(evaluation)}
                         className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl font-semibold"

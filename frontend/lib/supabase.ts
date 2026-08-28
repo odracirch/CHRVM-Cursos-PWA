@@ -6,5 +6,13 @@ const supabasePublishableKey =
 
 export const supabase = createClient(
   supabaseUrl,
-  supabasePublishableKey
+  supabasePublishableKey,
+  {
+    auth: {
+      flowType: 'pkce',
+      detectSessionInUrl: true,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  }
 )

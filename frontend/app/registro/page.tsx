@@ -35,6 +35,7 @@ export default function Register() {
             first_name: v.first_name,
             last_name: v.last_name,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 

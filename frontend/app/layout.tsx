@@ -1,3 +1,25 @@
-import './globals.css'; import type {Metadata} from 'next'; import Link from 'next/link'; import PwaRegister from '@/components/PwaRegister';
-export const metadata:Metadata={title:'CHRVM Cursos',description:'Plataforma educativa CHRVM Cursos',manifest:'/manifest.webmanifest'};
-export default function Layout({children}:{children:React.ReactNode}){return <html lang="es"><body><PwaRegister/><header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b"><div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between"><Link href="/" className="font-black text-xl text-brand-600">CHRVM <span className="text-slate-700">Cursos</span></Link><nav className="hidden md:flex gap-5 text-sm"><Link href="/cursos">Cursos</Link><Link href="/dashboard">Dashboard</Link><Link href="/instructor">Instructor</Link><Link href="/admin">Admin</Link><Link href="/login">Ingresar</Link></nav><Link href="/registro" className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm">Registrarme</Link></div></header><main>{children}</main><footer className="mt-16 border-t bg-white"><div className="max-w-6xl mx-auto px-4 py-8 text-sm text-slate-500">© 2026 CHRVM Cursos · Educación digital</div></footer></body></html>}
+import './globals.css'
+import type { Metadata } from 'next'
+import PwaRegister from '@/components/PwaRegister'
+import SiteChrome from '@/components/SiteChrome'
+
+export const metadata: Metadata = {
+  title: 'CHRVM Cursos',
+  description: 'Plataforma educativa CHRVM Cursos',
+  manifest: '/manifest.webmanifest',
+}
+
+export default function Layout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="es">
+      <body>
+        <PwaRegister />
+        <SiteChrome>{children}</SiteChrome>
+      </body>
+    </html>
+  )
+}

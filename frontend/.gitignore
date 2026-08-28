@@ -1,1 +1,4 @@
 .env.local
+
+# TypeScript build cache
+tsconfig.tsbuildinfo

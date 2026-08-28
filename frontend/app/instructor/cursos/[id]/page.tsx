@@ -140,6 +140,17 @@ export default function Page() {
               </h2>
 
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
+                      <Link
+                        href={`/instructor/cursos/${course.id}/editar`}
+                        className="card p-6 hover:border-blue-300 transition"
+                      >
+                        <h3 className="text-xl font-bold">
+                          Editar curso
+                        </h3>
+                        <p className="text-slate-500 mt-2">
+                          Modifica la información básica del curso.
+                        </p>
+                      </Link>
                 <Link
                   href={`/instructor/cursos/${course.id}/modulos`}
                   className="card p-6 hover:border-blue-300 transition"

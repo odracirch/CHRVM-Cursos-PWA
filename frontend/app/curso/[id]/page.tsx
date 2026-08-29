@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import CompleteLessonButton from '@/components/CompleteLessonButton'
 
 type Course = {
   id: string
@@ -275,25 +274,6 @@ export default function CursoPage() {
             )}
           </div>
 
-          {enrolled && lessonCount > 0 && (
-            <div className="mt-8">
-              <CompleteLessonButton
-                lessonId={lessons[0].id}
-                courseId={course.id}
-              />
-            </div>
-          )}
-
-          {progress >= 100 && (
-            <div className="mt-6">
-              <Link
-                href={`/curso/${course.id}/evaluacion`}
-                className="inline-block bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
-              >
-                📝 Presentar evaluación
-              </Link>
-            </div>
-          )}
         </div>
       </section>
 

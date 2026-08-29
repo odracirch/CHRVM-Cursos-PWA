@@ -268,7 +268,7 @@ export default function MisCursosPage() {
                   </div>
 
                   <Link
-                    href={`/cursos/${course.slug}`}
+                    href={`/curso/${course.id}`}
                     className="block text-center bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 mt-6 font-semibold"
                   >
                     {enrollment.completed

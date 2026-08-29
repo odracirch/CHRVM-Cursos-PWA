@@ -346,7 +346,7 @@ export default function Dashboard() {
 
                         {/* CONTINUAR */}
                         <Link
-                          href={`/cursos/${course.slug}`}
+                          href={`/curso/${course.id}`}
                           className="inline-block mt-5 bg-blue-600 text-white rounded-lg px-5 py-3 font-semibold"
                         >
                           {enrollment.completed

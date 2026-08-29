@@ -199,7 +199,7 @@ export default function CompleteLessonButton({
               href={`/curso/${courseId}/evaluacion`}
               className="inline-block bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
             >
-              📝 Presentar evaluación final
+              📝 Realizar evaluación
             </Link>
           </div>
         )}

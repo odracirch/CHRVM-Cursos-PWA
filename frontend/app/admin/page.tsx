@@ -1,5 +1,9 @@
+'use client'
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import AuthGuard from '@/components/AuthGuard'
+import { supabase } from '@/lib/supabase'
 
 const adminSections = [
   {
@@ -71,6 +75,13 @@ const adminSections = [
 ]
 
 export default function Page() {
+  const router = useRouter()
+
+  async function logout() {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   return (
     <AuthGuard roles={['admin']}>
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
@@ -86,6 +97,16 @@ export default function Page() {
           <p className="text-sm text-slate-500 mt-2">
             Selecciona una sección para comenzar.
           </p>
+        </div>
+
+        <div className="mt-5">
+          <button
+            type="button"
+            onClick={logout}
+            className="border border-red-200 text-red-600 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-red-50 transition"
+          >
+            Cerrar sesión
+          </button>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -49,13 +49,6 @@ export default async function CursosPage({
     <main className="max-w-6xl mx-auto px-4 py-12">
       <div className="flex justify-between items-center mb-10">
         <div>
-          <Link
-            href="/"
-            className="text-blue-600 font-semibold"
-          >
-            ← Inicio
-          </Link>
-
           <h1 className="text-4xl font-black mt-3">
             Cursos
           </h1>

@@ -11,6 +11,19 @@ export default function SiteChrome({
   const pathname = usePathname()
   const isHome = pathname === '/'
 
+  const isInstructor = pathname === '/instructor' || pathname.startsWith('/instructor/')
+  const isAdmin = pathname === '/admin' || pathname.startsWith('/admin/')
+
+  const homeHref = isInstructor
+    ? '/instructor'
+    : isAdmin
+      ? '/admin'
+      : '/dashboard'
+
+  const coursesHref = isInstructor
+    ? '/instructor/cursos'
+    : '/mis-cursos'
+
   return (
     <>
       {!isHome && (
@@ -28,14 +41,14 @@ export default function SiteChrome({
 
             <nav className="flex items-center gap-2 mt-3 overflow-x-auto pb-1">
               <Link
-                href="/dashboard"
+                href={homeHref}
                 className="border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap"
               >
                 Inicio
               </Link>
 
               <Link
-                href="/mis-cursos"
+                href={coursesHref}
                 className="border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap"
               >
                 Mis cursos

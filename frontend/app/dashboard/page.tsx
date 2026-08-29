@@ -192,6 +192,16 @@ export default function Dashboard() {
             </Link>
           </div>
 
+          {/* PROGRESO */}
+          <div className="card p-5">
+            <Link
+              href="/progreso"
+              className="font-semibold text-blue-600"
+            >
+              📊 Mi progreso →
+            </Link>
+          </div>
+
         </div>
 
         {/* MIS CURSOS */}

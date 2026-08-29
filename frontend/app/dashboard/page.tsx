@@ -162,6 +162,16 @@ export default function Dashboard() {
             </b>
           </div>
 
+          {/* PERFIL */}
+          <div className="card p-5">
+            <Link
+              href="/perfil"
+              className="font-semibold text-blue-600"
+            >
+              Mi perfil →
+            </Link>
+          </div>
+
           {/* CATÁLOGO */}
           <div className="card p-5">
             <Link

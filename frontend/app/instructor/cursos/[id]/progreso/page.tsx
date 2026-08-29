@@ -16,6 +16,18 @@ type Enrollment = {
   user_id: string
 }
 
+type Evaluation = {
+  id: string
+  title: string
+  minimum_pass_percentage: number
+}
+
+type EvaluationAttempt = {
+  user_id: string
+  grade: number
+  passed: boolean
+}
+
 type Profile = {
   id: string
   email: string | null
@@ -46,6 +58,9 @@ type StudentProgress = {
   completed: number
   total: number
   percentage: number
+  evaluationAttempts: number
+  evaluationBestGrade: number | null
+  evaluationPassed: boolean
   lessons: {
     id: string
     title: string
@@ -59,6 +74,7 @@ export default function Page() {
   const courseId = String(params.id)
 
   const [course, setCourse] = useState<Course | null>(null)
+  const [evaluation, setEvaluation] = useState<Evaluation | null>(null)
   const [students, setStudents] = useState<StudentProgress[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -69,7 +85,10 @@ export default function Page() {
     setError('')
 
     try {
-      const { data: courseData, error: courseError } = await supabase
+      const {
+        data: courseData,
+        error: courseError,
+      } = await supabase
         .from('courses')
         .select('id, title')
         .eq('id', courseId)
@@ -86,11 +105,34 @@ export default function Page() {
 
       setCourse(courseData)
 
-      const { data: enrollmentData, error: enrollmentError } =
-        await supabase
-          .from('enrollments')
-          .select('id, user_id')
-          .eq('course_id', courseId)
+      const {
+        data: evaluationData,
+        error: evaluationError,
+      } = await supabase
+        .from('evaluations')
+        .select('id, title, minimum_pass_percentage')
+        .eq('course_id', courseId)
+        .eq('published', true)
+        .maybeSingle()
+
+      if (evaluationError) {
+        console.error(evaluationError)
+        setError(evaluationError.message)
+        setEvaluation(null)
+        setStudents([])
+        setLoading(false)
+        return
+      }
+
+      setEvaluation(evaluationData)
+
+      const {
+        data: enrollmentData,
+        error: enrollmentError,
+      } = await supabase
+        .from('enrollments')
+        .select('id, user_id')
+        .eq('course_id', courseId)
 
       if (enrollmentError) {
         console.error(enrollmentError)
@@ -110,7 +152,10 @@ export default function Page() {
 
       const userIds = enrollments.map((item) => item.user_id)
 
-      const { data: profileData, error: profileError } = await supabase
+      const {
+        data: profileData,
+        error: profileError,
+      } = await supabase
         .from('profiles')
         .select('id, email, nombre, apellidos')
         .in('id', userIds)
@@ -123,7 +168,10 @@ export default function Page() {
         return
       }
 
-      const { data: moduleData, error: moduleError } = await supabase
+      const {
+        data: moduleData,
+        error: moduleError,
+      } = await supabase
         .from('modules')
         .select('id, title')
         .eq('course_id', courseId)
@@ -143,10 +191,14 @@ export default function Page() {
       let lessons: Lesson[] = []
 
       if (moduleIds.length > 0) {
-        const { data: lessonData, error: lessonError } = await supabase
+        const {
+          data: lessonData,
+          error: lessonError,
+        } = await supabase
           .from('lessons')
           .select('id, title, module_id')
           .in('module_id', moduleIds)
+          .eq('published', true)
           .order('position', { ascending: true })
 
         if (lessonError) {
@@ -165,7 +217,10 @@ export default function Page() {
       let progressData: LessonProgress[] = []
 
       if (lessonIds.length > 0) {
-        const { data, error: progressError } = await supabase
+        const {
+          data,
+          error: progressError,
+        } = await supabase
           .from('lesson_progress')
           .select('user_id, lesson_id, completed')
           .in('user_id', userIds)
@@ -182,6 +237,29 @@ export default function Page() {
         progressData = data ?? []
       }
 
+      let attemptsData: EvaluationAttempt[] = []
+
+      if (evaluationData) {
+        const {
+          data,
+          error: attemptsError,
+        } = await supabase
+          .from('evaluation_attempts')
+          .select('user_id, grade, passed')
+          .eq('evaluation_id', evaluationData.id)
+          .in('user_id', userIds)
+
+        if (attemptsError) {
+          console.error(attemptsError)
+          setError(attemptsError.message)
+          setStudents([])
+          setLoading(false)
+          return
+        }
+
+        attemptsData = data ?? []
+      }
+
       const profiles = profileData ?? []
 
       const result = enrollments.map((enrollment) => {
@@ -192,16 +270,37 @@ export default function Page() {
           (item) => item.user_id === enrollment.user_id,
         )
 
+        const studentAttempts = attemptsData.filter(
+          (item) => item.user_id === enrollment.user_id,
+        )
+
         const completed = lessons.filter((lesson) =>
           studentProgress.some(
             (progress) =>
-              progress.lesson_id === lesson.id && progress.completed,
+              progress.lesson_id === lesson.id &&
+              progress.completed,
           ),
         ).length
 
         const total = lessons.length
+
         const percentage =
-          total > 0 ? Math.round((completed / total) * 100) : 0
+          total > 0
+            ? Math.round((completed / total) * 100)
+            : 0
+
+        const evaluationBestGrade =
+          studentAttempts.length > 0
+            ? Math.max(
+                ...studentAttempts.map((item) =>
+                  Number(item.grade),
+                ),
+              )
+            : null
+
+        const evaluationPassed = studentAttempts.some(
+          (item) => item.passed === true,
+        )
 
         const studentLessons = lessons.map((lesson) => {
           const module = modules.find(
@@ -214,7 +313,8 @@ export default function Page() {
             moduleTitle: module?.title ?? 'Módulo',
             completed: studentProgress.some(
               (progress) =>
-                progress.lesson_id === lesson.id && progress.completed,
+                progress.lesson_id === lesson.id &&
+                progress.completed,
             ),
           }
         })
@@ -225,6 +325,9 @@ export default function Page() {
           completed,
           total,
           percentage,
+          evaluationAttempts: studentAttempts.length,
+          evaluationBestGrade,
+          evaluationPassed,
           lessons: studentLessons,
         }
       })
@@ -252,7 +355,10 @@ export default function Page() {
   function studentName(profile: Profile | null) {
     if (!profile) return 'Alumno'
 
-    const fullName = [profile.nombre, profile.apellidos]
+    const fullName = [
+      profile.nombre,
+      profile.apellidos,
+    ]
       .filter(Boolean)
       .join(' ')
       .trim()
@@ -322,15 +428,16 @@ export default function Page() {
               </p>
 
               <p className="text-sm text-slate-500 mt-1">
-                Cuando un estudiante se inscriba en este curso aparecerá
-                aquí su progreso.
+                Cuando un estudiante se inscriba en este curso
+                aparecerá aquí su progreso.
               </p>
             </div>
           ) : (
             <div className="space-y-5">
               {students.map((student) => {
                 const isExpanded =
-                  expandedStudent === student.enrollment.user_id
+                  expandedStudent ===
+                  student.enrollment.user_id
 
                 return (
                   <div
@@ -370,6 +477,35 @@ export default function Page() {
                             {student.percentage}% completado
                           </p>
                         </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <span
+                            className={
+                              student.evaluationPassed
+                                ? 'bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold'
+                                : student.evaluationAttempts > 0
+                                  ? 'bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold'
+                                  : 'bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold'
+                            }
+                          >
+                            {student.evaluationPassed
+                              ? 'Evaluación aprobada'
+                              : student.evaluationAttempts > 0
+                                ? 'Evaluación no aprobada'
+                                : 'Evaluación pendiente'}
+                          </span>
+
+                          <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+                            {student.evaluationAttempts} / 3 intentos
+                          </span>
+
+                          {student.evaluationBestGrade !== null && (
+                            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold">
+                              Mejor calificación:{' '}
+                              {student.evaluationBestGrade}%
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <button
@@ -391,6 +527,62 @@ export default function Page() {
 
                     {isExpanded && (
                       <div className="mt-5 border-t border-slate-200 pt-5">
+                        <div className="mb-6 rounded-2xl bg-slate-50 border border-slate-200 p-5">
+                          <h4 className="font-bold text-lg">
+                            Evaluación
+                          </h4>
+
+                          {evaluation ? (
+                            <div className="mt-3 space-y-2 text-sm">
+                              <p>
+                                <span className="font-semibold">
+                                  Evaluación:
+                                </span>{' '}
+                                {evaluation.title}
+                              </p>
+
+                              <p>
+                                <span className="font-semibold">
+                                  Estado:
+                                </span>{' '}
+                                {student.evaluationPassed
+                                  ? 'Aprobada'
+                                  : student.evaluationAttempts > 0
+                                    ? 'No aprobada'
+                                    : 'Pendiente'}
+                              </p>
+
+                              <p>
+                                <span className="font-semibold">
+                                  Intentos:
+                                </span>{' '}
+                                {student.evaluationAttempts} de 3
+                              </p>
+
+                              <p>
+                                <span className="font-semibold">
+                                  Mejor calificación:
+                                </span>{' '}
+                                {student.evaluationBestGrade !== null
+                                  ? `${student.evaluationBestGrade}%`
+                                  : 'Sin calificación'}
+                              </p>
+
+                              <p>
+                                <span className="font-semibold">
+                                  Mínimo para aprobar:
+                                </span>{' '}
+                                {evaluation.minimum_pass_percentage}%
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-slate-500 mt-2">
+                              Este curso todavía no tiene una
+                              evaluación final publicada.
+                            </p>
+                          )}
+                        </div>
+
                         <h4 className="font-bold mb-4">
                           Lecciones
                         </h4>

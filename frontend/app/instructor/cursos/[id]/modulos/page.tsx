@@ -211,16 +211,31 @@ export default function Page() {
       .eq('id', courseId)
       .eq('instructor_id', user.id)
       .select('id, title, published')
-      .single()
+
+    console.log('RESULTADO UPDATE CURSO:', {
+      data,
+      error,
+      courseId,
+      userId: user.id,
+      nextPublished,
+    })
 
     if (error) {
-      console.error(error)
+      console.error('ERROR UPDATE CURSO:', error)
       setError(error.message)
       setSaving(false)
       return
     }
 
-    setCourse(data)
+    if (!data || data.length === 0) {
+      setError(
+        'No se actualizó ningún curso. El instructor no tiene permiso sobre este curso o la policy RLS bloqueó la operación.'
+      )
+      setSaving(false)
+      return
+    }
+
+    setCourse(data[0])
     setSaving(false)
   }
 

@@ -41,12 +41,6 @@ export default function SiteChrome({
                 Mis cursos
               </Link>
 
-              <Link
-                href="/cursos"
-                className="border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap"
-              >
-                Cursos
-              </Link>
             </nav>
           </div>
         </header>

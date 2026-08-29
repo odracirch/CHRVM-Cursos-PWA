@@ -265,10 +265,10 @@ export default function CursoPage() {
     return (
       <main className="max-w-5xl mx-auto px-4 py-10">
         <Link
-          href="/cursos"
+          href={enrolled ? "/mis-cursos" : "/cursos"}
           className="text-blue-600 font-semibold"
         >
-          ← Volver a cursos
+          {enrolled ? "← Mis cursos" : "← Volver a cursos"}
         </Link>
 
         <section className="mt-6 rounded-3xl bg-slate-950 text-white p-8 md:p-12">
@@ -287,10 +287,10 @@ export default function CursoPage() {
     return (
       <main className="max-w-5xl mx-auto px-4 py-10">
         <Link
-          href="/cursos"
+          href="/mis-cursos"
           className="text-blue-600 font-semibold"
         >
-          ← Volver a cursos
+          ← Mis cursos
         </Link>
 
         <section className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-8">
@@ -347,10 +347,10 @@ export default function CursoPage() {
 
       {/* Volver */}
       <Link
-        href="/cursos"
+        href="/mis-cursos"
         className="text-blue-600 font-semibold"
       >
-        ← Volver a cursos
+        ← Mis cursos
       </Link>
 
       {/* Información del curso */}

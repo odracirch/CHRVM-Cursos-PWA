@@ -9,35 +9,51 @@ export default function SiteChrome({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-
   const isHome = pathname === '/'
 
   return (
     <>
       {!isHome && (
         <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b">
-          <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <Link
-              href="/"
-              className="font-black text-xl text-brand-600"
-            >
-              CHRVM <span className="text-slate-700">Cursos</span>
-            </Link>
+          <div className="max-w-6xl mx-auto px-4 min-h-16 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <Link
+                href="/"
+                className="font-black text-xl text-brand-600 whitespace-nowrap"
+              >
+                CHRVM <span className="text-slate-700">Cursos</span>
+              </Link>
 
-            <nav className="hidden md:flex gap-5 text-sm">
-              <Link href="/cursos">Cursos</Link>
-              <Link href="/dashboard">Dashboard</Link>
-              <Link href="/instructor">Instructor</Link>
-              <Link href="/admin">Admin</Link>
-              <Link href="/login">Ingresar</Link>
+              <Link
+                href="/registro"
+                className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap"
+              >
+                Crear cuenta
+              </Link>
+            </div>
+
+            <nav className="flex items-center gap-2 mt-3 overflow-x-auto pb-1">
+              <Link
+                href="/dashboard"
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap"
+              >
+                Inicio
+              </Link>
+
+              <Link
+                href="/mis-cursos"
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap"
+              >
+                Mis cursos
+              </Link>
+
+              <Link
+                href="/cursos"
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap"
+              >
+                Cursos
+              </Link>
             </nav>
-
-            <Link
-              href="/registro"
-              className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm"
-            >
-              Crear cuenta
-            </Link>
           </div>
         </header>
       )}

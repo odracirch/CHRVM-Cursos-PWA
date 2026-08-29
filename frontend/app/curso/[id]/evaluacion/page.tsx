@@ -47,6 +47,9 @@ function EvaluationContent() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<Result | null>(null)
+  const [attemptsUsed, setAttemptsUsed] = useState(0)
+
+  const MAX_ATTEMPTS = 3
 
   useEffect(() => {
     async function loadEvaluation() {
@@ -173,6 +176,13 @@ function EvaluationContent() {
       return
     }
 
+    if (attemptsUsed >= MAX_ATTEMPTS) {
+      setError(
+        'Has alcanzado el máximo de 3 intentos para esta evaluación.'
+      )
+      return
+    }
+
     setSending(true)
 
     const payload = questions.map((question) => ({
@@ -215,6 +225,7 @@ function EvaluationContent() {
       passed: data[0].passed === true,
     })
 
+    setAttemptsUsed((current) => current + 1)
     setSending(false)
   }
 

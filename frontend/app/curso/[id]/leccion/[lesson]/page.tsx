@@ -63,7 +63,7 @@ export default async function LessonPage({
     <main className="max-w-4xl mx-auto px-4 py-10">
 
       <Link
-        href={`/cursos/${curso.slug}`}
+        href={`/curso/${curso.id}`}
         className="text-blue-600 font-semibold"
       >
         ← Volver al curso
@@ -127,7 +127,7 @@ export default async function LessonPage({
       <div className="flex justify-between items-center mt-8">
 
         <Link
-          href={`/cursos/${curso.slug}`}
+          href={`/curso/${curso.id}`}
           className="border border-slate-300 bg-white px-5 py-3 rounded-xl font-semibold"
         >
           ← Contenido del curso

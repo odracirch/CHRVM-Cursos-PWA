@@ -20,9 +20,16 @@ export default function Page() {
   const [users, setUsers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [actionLoading, setActionLoading] = useState('')
+  const [currentUserId, setCurrentUserId] = useState('')
 
   useEffect(() => {
     async function loadUsers() {
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser()
+
+      setCurrentUserId(currentUser?.id ?? '')
       setLoading(true)
       setError('')
 
@@ -46,6 +53,56 @@ export default function Page() {
 
     loadUsers()
   }, [])
+
+  async function updateRole(userId: string, role: string) {
+    setActionLoading(`role-${userId}`)
+    setError('')
+
+    const { error } = await supabase.rpc('admin_update_user_role', {
+      target_user_id: userId,
+      new_role: role,
+    })
+
+    if (error) {
+      console.error('Error cambiando rol:', error)
+      setError(error.message)
+      setActionLoading('')
+      return
+    }
+
+    setUsers((current) =>
+      current.map((user) =>
+        user.id === userId ? { ...user, rol: role } : user
+      )
+    )
+
+    setActionLoading('')
+  }
+
+  async function updateActive(userId: string, active: boolean) {
+    setActionLoading(`active-${userId}`)
+    setError('')
+
+    const { error } = await supabase.rpc('admin_set_user_active', {
+      target_user_id: userId,
+      new_active: active,
+    })
+
+    if (error) {
+      console.error('Error cambiando estado:', error)
+      setError(error.message)
+      setActionLoading('')
+      return
+    }
+
+    setUsers((current) =>
+      current.map((user) =>
+        user.id === userId ? { ...user, activo: active } : user
+      )
+    )
+
+    setActionLoading('')
+  }
 
   return (
     <AuthGuard roles={['admin']}>
@@ -103,6 +160,9 @@ export default function Page() {
                     <th className="px-3 py-3 font-semibold">
                       Registro
                     </th>
+          <th className="px-3 py-3 font-semibold">
+            Acciones
+          </th>
                   </tr>
                 </thead>
 
@@ -152,6 +212,47 @@ export default function Page() {
                             ).toLocaleDateString('es-MX')
                           : '—'}
                       </td>
+
+                  <td className="px-3 py-4">
+                    {user.id === currentUserId ? (
+                      <span className="text-xs text-slate-500">
+                        Cuenta actual
+                      </span>
+                    ) : (
+                      <div className="flex flex-col gap-2 min-w-[170px]">
+                        <select
+                          value={user.rol ?? "estudiante"}
+                          onChange={(e) =>
+                            updateRole(user.id, e.target.value)
+                          }
+                          disabled={
+                            actionLoading === `role-${user.id}`
+                          }
+                          className="border rounded-lg px-2 py-1 text-sm"
+                        >
+                          <option value="estudiante">Estudiante</option>
+                          <option value="instructor">Instructor</option>
+                          <option value="admin">Admin</option>
+                        </select>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateActive(
+                              user.id,
+                              user.activo === false
+                            )
+                          }
+                          disabled={
+                            actionLoading === `active-${user.id}`
+                          }
+                          className="border rounded-lg px-3 py-1 text-sm font-semibold"
+                        >
+                          {user.activo === false ? "Activar" : "Desactivar"}
+                        </button>
+                      </div>
+                    )}
+                  </td>
                     </tr>
                   ))}
                 </tbody>

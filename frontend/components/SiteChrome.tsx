@@ -24,12 +24,6 @@ export default function SiteChrome({
                 CHRVM <span className="text-slate-700">Cursos</span>
               </Link>
 
-              <Link
-                href="/registro"
-                className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap"
-              >
-                Crear cuenta
-              </Link>
             </div>
 
             <nav className="flex items-center gap-2 mt-3 overflow-x-auto pb-1">

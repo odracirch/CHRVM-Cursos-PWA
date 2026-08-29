@@ -265,10 +265,10 @@ export default function CursoPage() {
     return (
       <main className="max-w-5xl mx-auto px-4 py-10">
         <Link
-          href={enrolled ? "/mis-cursos" : "/cursos"}
+          href="/mis-cursos"
           className="text-blue-600 font-semibold"
         >
-          {enrolled ? "← Mis cursos" : "← Volver a cursos"}
+          ← Mis cursos
         </Link>
 
         <section className="mt-6 rounded-3xl bg-slate-950 text-white p-8 md:p-12">

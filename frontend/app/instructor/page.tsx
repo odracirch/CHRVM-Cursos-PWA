@@ -4,6 +4,7 @@ import Link from 'next/link'
 import AuthGuard from '@/components/AuthGuard'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type Course = {
   id: string
@@ -12,8 +13,14 @@ type Course = {
 }
 
 export default function Page() {
+  const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
+
+  async function logout() {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   useEffect(() => {
     async function loadCourses() {

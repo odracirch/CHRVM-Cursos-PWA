@@ -478,7 +478,7 @@ export default function Page() {
                           </p>
                         </div>
 
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
                           <span
                             className={
                               student.evaluationPassed
@@ -496,13 +496,12 @@ export default function Page() {
                           </span>
 
                           <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-                            {student.evaluationAttempts} / 3 intentos
+                            Intentos: {student.evaluationAttempts} de 3
                           </span>
 
                           {student.evaluationBestGrade !== null && (
                             <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold">
-                              Mejor calificación:{' '}
-                              {student.evaluationBestGrade}%
+                              Mejor calificación: {student.evaluationBestGrade}%
                             </span>
                           )}
                         </div>

@@ -222,14 +222,14 @@ export default function Page() {
 
     if (error) {
       console.error('ERROR UPDATE CURSO:', error)
-      setError(error.message)
+      setError(`Error al actualizar: ${error.message}`)
       setSaving(false)
       return
     }
 
     if (!data || data.length === 0) {
       setError(
-        'No se actualizó ningún curso. El instructor no tiene permiso sobre este curso o la policy RLS bloqueó la operación.'
+        `UPDATE ejecutado pero Supabase no devolvió ninguna fila. courseId=${courseId}, userId=${user.id}`
       )
       setSaving(false)
       return

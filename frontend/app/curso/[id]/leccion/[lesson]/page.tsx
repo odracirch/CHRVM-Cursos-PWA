@@ -60,14 +60,44 @@ export default async function LessonPage({
     notFound()
   }
 
-  const { data: leccionesModulo } = await supabase
-    .from('lessons')
+  const { data: modulosCurso, error: modulosError } = await supabase
+    .from('modules')
     .select('id, title, position')
-    .eq('module_id', leccion.module_id)
-    .eq('published', true)
+    .eq('course_id', curso.id)
     .order('position', { ascending: true })
 
-  const lecciones = leccionesModulo ?? []
+  if (modulosError) {
+    console.error('Error cargando módulos del curso:', modulosError)
+  }
+
+  const modulos = modulosCurso ?? []
+  const moduleIds = modulos.map((item) => item.id)
+
+  const { data: leccionesCurso, error: leccionesError } = moduleIds.length
+    ? await supabase
+        .from('lessons')
+        .select('id, title, module_id, position')
+        .in('module_id', moduleIds)
+        .eq('published', true)
+    : { data: [], error: null }
+
+  if (leccionesError) {
+    console.error('Error cargando lecciones del curso:', leccionesError)
+  }
+
+  const lecciones = (leccionesCurso ?? []).sort((a, b) => {
+    const moduloA = modulos.find((item) => item.id === a.module_id)
+    const moduloB = modulos.find((item) => item.id === b.module_id)
+
+    const posicionModuloA = moduloA?.position ?? 0
+    const posicionModuloB = moduloB?.position ?? 0
+
+    if (posicionModuloA !== posicionModuloB) {
+      return posicionModuloA - posicionModuloB
+    }
+
+    return (a.position ?? 0) - (b.position ?? 0)
+  })
 
   const indiceActual = lecciones.findIndex(
     (item) => item.id === leccion.id
@@ -84,6 +114,7 @@ export default async function LessonPage({
       : null
 
   return (
+
     <main className="max-w-4xl mx-auto px-4 py-10">
       <Link
         href={`/curso/${curso.id}`}
@@ -156,6 +187,7 @@ export default async function LessonPage({
         <CompleteLessonButton
           lessonId={leccion.id}
           courseId={curso.id}
+          isLastLesson={indiceActual === lecciones.length - 1}
         />
       </div>
 

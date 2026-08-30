@@ -7,11 +7,13 @@ import { supabase } from '@/lib/supabase'
 type Props = {
   lessonId: string
   courseId: string
+  isLastLesson?: boolean
 }
 
 export default function CompleteLessonButton({
   lessonId,
   courseId,
+  isLastLesson = false,
 }: Props) {
   const [loading, setLoading] = useState(false)
   const [completed, setCompleted] = useState(false)
@@ -193,7 +195,7 @@ export default function CompleteLessonButton({
         </p>
       )}
 
-        {progress !== null && progress >= 100 && (
+        {isLastLesson && (
           <div className="mt-5">
             <Link
               href={`/curso/${courseId}/evaluacion`}

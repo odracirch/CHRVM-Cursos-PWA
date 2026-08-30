@@ -104,6 +104,68 @@ export default function Page() {
     setActionLoading('')
   }
 
+  async function deleteUser(user: Profile) {
+    if (user.id === currentUserId) {
+      setError('No puedes eliminar tu propia cuenta de administrador.')
+      return
+    }
+
+    const displayName =
+      `${user.nombre} ${user.apellidos ?? ''}`.trim()
+
+    const confirmed = window.confirm(
+      `¿Eliminar definitivamente a ${displayName}?\n\n` +
+        `Correo: ${user.email ?? 'Sin email'}\n\n` +
+        `Esta acción eliminará su cuenta y sus datos asociados de CHRVM Cursos.`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setActionLoading(`delete-${user.id}`)
+    setError('')
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        throw new Error('No hay una sesión activa.')
+      }
+
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error || 'No se pudo eliminar el usuario.'
+        )
+      }
+
+      setUsers((current) =>
+        current.filter((item) => item.id !== user.id)
+      )
+    } catch (error) {
+      console.error('Error eliminando usuario:', error)
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo eliminar el usuario.'
+      )
+    } finally {
+      setActionLoading('')
+    }
+  }
+
   return (
     <AuthGuard roles={['admin']}>
       <div className="max-w-6xl mx-auto px-4 py-10">
@@ -124,7 +186,8 @@ export default function Page() {
             </div>
 
             <div className="text-sm text-slate-500">
-              {users.length} usuario{users.length === 1 ? '' : 's'}
+              {users.length} usuario
+              {users.length === 1 ? '' : 's'}
             </div>
           </div>
 
@@ -148,113 +211,148 @@ export default function Page() {
                     <th className="px-3 py-3 font-semibold">
                       Nombre
                     </th>
+
                     <th className="px-3 py-3 font-semibold">
                       Email
                     </th>
+
                     <th className="px-3 py-3 font-semibold">
                       Rol
                     </th>
+
                     <th className="px-3 py-3 font-semibold">
                       Estado
                     </th>
+
                     <th className="px-3 py-3 font-semibold">
                       Registro
                     </th>
-          <th className="px-3 py-3 font-semibold">
-            Acciones
-          </th>
+
+                    <th className="px-3 py-3 font-semibold">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {users.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="border-b last:border-0"
-                    >
-                      <td className="px-3 py-4">
-                        <div className="font-semibold">
-                          {user.nombre}{' '}
-                          {user.apellidos ?? ''}
-                        </div>
+                  {users.map((user) => {
+                    const rowLoading = actionLoading.endsWith(
+                      `-${user.id}`
+                    )
 
-                        <div className="text-xs text-slate-400 mt-1">
-                          {user.id}
-                        </div>
-                      </td>
+                    return (
+                      <tr
+                        key={user.id}
+                        className="border-b last:border-0"
+                      >
+                        <td className="px-3 py-4">
+                          <div className="font-semibold">
+                            {user.nombre}{' '}
+                            {user.apellidos ?? ''}
+                          </div>
 
-                      <td className="px-3 py-4">
-                        {user.email ?? 'Sin email'}
-                      </td>
+                          <div className="text-xs text-slate-400 mt-1">
+                            {user.id}
+                          </div>
+                        </td>
 
-                      <td className="px-3 py-4">
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">
-                          {user.rol ?? 'Sin rol'}
-                        </span>
-                      </td>
+                        <td className="px-3 py-4">
+                          {user.email ?? 'Sin email'}
+                        </td>
 
-                      <td className="px-3 py-4">
-                        {user.activo === false ? (
-                          <span className="text-red-600 font-semibold">
-                            Inactivo
+                        <td className="px-3 py-4">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">
+                            {user.rol ?? 'Sin rol'}
                           </span>
-                        ) : (
-                          <span className="text-green-600 font-semibold">
-                            Activo
-                          </span>
-                        )}
-                      </td>
+                        </td>
 
-                      <td className="px-3 py-4 text-slate-500">
-                        {user.created_at
-                          ? new Date(
-                              user.created_at
-                            ).toLocaleDateString('es-MX')
-                          : '—'}
-                      </td>
+                        <td className="px-3 py-4">
+                          {user.activo === false ? (
+                            <span className="text-red-600 font-semibold">
+                              Inactivo
+                            </span>
+                          ) : (
+                            <span className="text-green-600 font-semibold">
+                              Activo
+                            </span>
+                          )}
+                        </td>
 
-                  <td className="px-3 py-4">
-                    {user.id === currentUserId ? (
-                      <span className="text-xs text-slate-500">
-                        Cuenta actual
-                      </span>
-                    ) : (
-                      <div className="flex flex-col gap-2 min-w-[170px]">
-                        <select
-                          value={user.rol ?? "estudiante"}
-                          onChange={(e) =>
-                            updateRole(user.id, e.target.value)
-                          }
-                          disabled={
-                            actionLoading === `role-${user.id}`
-                          }
-                          className="border rounded-lg px-2 py-1 text-sm"
-                        >
-                          <option value="estudiante">Estudiante</option>
-                          <option value="instructor">Instructor</option>
-                          <option value="admin">Admin</option>
-                        </select>
+                        <td className="px-3 py-4 text-slate-500">
+                          {user.created_at
+                            ? new Date(
+                                user.created_at
+                              ).toLocaleDateString('es-MX')
+                            : '—'}
+                        </td>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateActive(
-                              user.id,
-                              user.activo === false
-                            )
-                          }
-                          disabled={
-                            actionLoading === `active-${user.id}`
-                          }
-                          className="border rounded-lg px-3 py-1 text-sm font-semibold"
-                        >
-                          {user.activo === false ? "Activar" : "Desactivar"}
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                    </tr>
-                  ))}
+                        <td className="px-3 py-4">
+                          {user.id === currentUserId ? (
+                            <span className="text-xs text-slate-500">
+                              Cuenta actual
+                            </span>
+                          ) : (
+                            <div className="flex flex-col gap-2 min-w-[190px]">
+                              <select
+                                value={user.rol ?? 'estudiante'}
+                                onChange={(e) =>
+                                  updateRole(
+                                    user.id,
+                                    e.target.value
+                                  )
+                                }
+                                disabled={rowLoading}
+                                className="border rounded-lg px-2 py-1 text-sm"
+                              >
+                                <option value="estudiante">
+                                  Estudiante
+                                </option>
+
+                                <option value="instructor">
+                                  Instructor
+                                </option>
+
+                                <option value="admin">
+                                  Admin
+                                </option>
+                              </select>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateActive(
+                                    user.id,
+                                    user.activo === false
+                                  )
+                                }
+                                disabled={rowLoading}
+                                className="border rounded-lg px-3 py-1 text-sm font-semibold"
+                              >
+                                {actionLoading ===
+                                `active-${user.id}`
+                                  ? 'Procesando...'
+                                  : user.activo === false
+                                    ? 'Activar'
+                                    : 'Desactivar'}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => deleteUser(user)}
+                                disabled={rowLoading}
+                                className="border border-red-300 text-red-700 rounded-lg px-3 py-1 text-sm font-semibold hover:bg-red-50"
+                              >
+                                {actionLoading ===
+                                `delete-${user.id}`
+                                  ? 'Eliminando...'
+                                  : 'Eliminar'}
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
 

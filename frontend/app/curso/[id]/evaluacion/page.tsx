@@ -346,7 +346,13 @@ function EvaluationContent() {
       </div>
 
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4">
+        <div
+          className={`mb-6 rounded-xl p-4 ${
+            error.toLowerCase().includes('aprobado')
+              ? 'bg-yellow-50 border border-yellow-200 text-yellow-800'
+              : 'bg-red-50 border border-red-200 text-red-700'
+          }`}
+        >
           {error}
         </div>
       )}

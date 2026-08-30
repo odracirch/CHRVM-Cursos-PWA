@@ -127,6 +127,15 @@ export default function Login() {
               : 'Entrar'}
           </button>
         </form>
+        <p className="text-sm mt-4 text-center">
+          <Link
+            className="text-brand-600 font-semibold"
+            href="/recuperar-password"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
+
 
         {err && (
           <div className="text-red-600 text-sm mt-4">

@@ -22,6 +22,8 @@ export default function SiteChrome({
 
   const coursesHref = isInstructor
     ? '/instructor/cursos'
+    : isAdmin
+    ? '/admin/cursos'
     : '/mis-cursos'
 
   return (

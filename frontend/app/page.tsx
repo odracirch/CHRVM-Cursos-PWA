@@ -113,11 +113,11 @@ export default function Home() {
 
               <div>
                 <h2 className="text-xl sm:text-2xl font-black">
-                  Obtén certificados
+                  Obtén una constancia 
                 </h2>
 
                 <p className="mt-1 text-base sm:text-lg text-slate-600">
-                  Certificados al completar cada curso.
+                  Constancia con valor curricular al completar cada curso.
                 </p>
               </div>
             </div>

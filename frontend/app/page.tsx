@@ -45,7 +45,7 @@ export default function Home() {
         {/* HERO */}
         <section className="py-14 sm:py-20">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-amber-600">
-            CHRVM Cursos
+            Plataforma educativa CHRVM Cursos
           </p>
 
           <h1 className="mt-5 text-5xl sm:text-6xl md:text-7xl font-black leading-[0.95] tracking-tight text-slate-950">

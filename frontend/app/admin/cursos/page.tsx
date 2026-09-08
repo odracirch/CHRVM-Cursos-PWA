@@ -18,6 +18,14 @@ type Course = {
   updated_at: string | null
 }
 
+type Instructor = {
+  id: string
+  nombre: string
+  apellidos: string | null
+  email: string | null
+  activo: boolean | null
+}
+
 type Category = {
   id: number
   name: string
@@ -29,12 +37,14 @@ const emptyForm = {
   description: '',
   image_url: '',
   category_id: '',
+  instructor_id: '',
   published: true,
 }
 
 export default function Page() {
   const [courses, setCourses] = useState<Course[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [instructors, setInstructors] = useState<Instructor[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -76,9 +86,26 @@ export default function Page() {
     }
   }
 
+  async function loadInstructors() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, nombre, apellidos, email, activo')
+      .eq('rol', 'instructor')
+      .order('nombre', { ascending: true })
+
+    if (error) {
+      console.error(error)
+      setError(error.message)
+      setInstructors([])
+    } else {
+      setInstructors(data ?? [])
+    }
+  }
+
   useEffect(() => {
     loadCourses()
     loadCategories()
+    loadInstructors()
   }, [])
 
   function startCreate() {
@@ -96,6 +123,7 @@ export default function Page() {
       description: course.description ?? '',
       image_url: course.image_url ?? '',
       category_id: course.category_id?.toString() ?? '',
+      instructor_id: course.instructor_id ?? '',
       published: course.published ?? false,
     })
     setError('')
@@ -125,6 +153,7 @@ export default function Page() {
       description: form.description.trim() || null,
       image_url: form.image_url.trim() || null,
       category_id: form.category_id ? Number(form.category_id) : null,
+      instructor_id: form.instructor_id || null,
       published: form.published,
     }
 
@@ -320,6 +349,35 @@ export default function Page() {
 
             <div>
               <label className="block text-sm font-semibold mb-2">
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              Instructor responsable
+            </label>
+            <select
+              value={form.instructor_id}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  instructor_id: event.target.value,
+                })
+              }
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white"
+            >
+              <option value="">Sin instructor asignado</option>
+              {instructors.map((instructor) => {
+                const nombre = [instructor.nombre, instructor.apellidos].filter(Boolean).join(" ")
+                return (
+                  <option key={instructor.id} value={instructor.id}>
+                    {nombre || "Instructor"}{instructor.activo === false ? " (Inactivo)" : ""}
+                  </option>
+                )
+              })}
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              El instructor asignado podrá administrar este curso desde su panel.
+            </p>
+          </div>
+
                 URL de imagen
               </label>
 

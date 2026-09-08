@@ -1,19 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 type Props = {
   lessonId: string
   courseId: string
-  isLastLesson?: boolean
 }
 
 export default function CompleteLessonButton({
   lessonId,
   courseId,
-  isLastLesson = false,
 }: Props) {
   const [loading, setLoading] = useState(false)
   const [completed, setCompleted] = useState(false)
@@ -195,16 +192,7 @@ export default function CompleteLessonButton({
         </p>
       )}
 
-        {isLastLesson && (
-          <div className="mt-5">
-            <Link
-              href={`/curso/${courseId}/evaluacion`}
-              className="inline-block bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
-            >
-              📝 Realizar evaluación
-            </Link>
-          </div>
-        )}
+  
     </div>
   )
 }

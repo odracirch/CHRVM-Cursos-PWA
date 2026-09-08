@@ -274,6 +274,19 @@ export default function CursoPage() {
             )}
           </div>
 
+          {progress < 100 && (
+            <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="font-bold text-blue-800">
+                🔒 Evaluación final
+              </p>
+              <p className="text-blue-700 mt-1">
+                La evaluación estará disponible al completar el 100% del curso.
+                Al terminar todas las lecciones, encontrarás el botón
+                “Realizar evaluación” al final de esta página.
+              </p>
+            </div>
+          )}
+
         </div>
       </section>
 
@@ -333,6 +346,17 @@ export default function CursoPage() {
           })}
         </div>
       </section>
+
+      {progress >= 100 && (
+        <div className="mt-8 flex justify-center">
+          <Link
+            href={`/curso/${course.id}/evaluacion`}
+            className="inline-block bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-semibold"
+          >
+            📝 Realizar evaluación
+          </Link>
+        </div>
+      )}
     </main>
   )
 }

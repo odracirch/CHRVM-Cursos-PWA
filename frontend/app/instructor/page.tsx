@@ -92,6 +92,16 @@ export default function Page() {
               Crea un nuevo curso.
             </p>
           </Link>
+
+          <Link
+            href="/instructor/certificados"
+            className="card p-6 hover:border-blue-300 transition"
+          >
+            <h2 className="text-xl font-bold">📜 Solicitudes de certificados</h2>
+            <p className="text-slate-500 mt-2">
+              Revisa y gestiona las solicitudes de tus alumnos.
+            </p>
+          </Link>
         </div>
 
         <section className="mt-10">

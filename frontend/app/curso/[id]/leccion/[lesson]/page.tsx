@@ -187,7 +187,6 @@ export default async function LessonPage({
         <CompleteLessonButton
           lessonId={leccion.id}
           courseId={curso.id}
-          isLastLesson={indiceActual === lecciones.length - 1}
         />
       </div>
 
@@ -220,16 +219,7 @@ export default async function LessonPage({
               {leccionSiguiente.title} →
             </Link>
           ) : (
-            <Link
-              href={`/curso/${curso.id}/evaluacion`}
-              className="border border-blue-600 bg-blue-600 text-white hover:opacity-90 px-5 py-4 rounded-xl font-semibold text-right"
-            >
-              <span className="block text-xs opacity-80 mb-1">
-                Última lección
-              </span>
-
-              📝 Realizar evaluación →
-            </Link>
+            <div />
           )}
         </div>
       )}

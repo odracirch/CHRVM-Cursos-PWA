@@ -276,7 +276,7 @@ export default function Page() {
           href="/dashboard"
           className="text-blue-600 font-semibold"
         >
-          ← Dashboard
+          ← Panel principal
         </Link>
 
         <div className="mt-5">

@@ -10,7 +10,7 @@ export default function Page() {
         </div>
 
         <div className="card p-7">
-          <h1 className="text-3xl font-black">Admin · Configuracion</h1>
+          <h1 className="text-3xl font-black">Admin · Configuración</h1>
 
           <p className="text-slate-600 mt-3">
             Panel protegido de CHRVM Cursos. Esta sección está preparada

@@ -91,12 +91,12 @@ function CertificatesAdminContent() {
 
         setCourses(courseMap)
       } catch (err) {
-        console.error('Error cargando certificados:', err)
+        console.error('Error cargando constancias:', err)
 
         setError(
           err instanceof Error
             ? err.message
-            : 'No se pudieron cargar los certificados.'
+            : 'No se pudieron cargar las constancias.'
         )
       } finally {
         setLoading(false)
@@ -114,17 +114,17 @@ function CertificatesAdminContent() {
 
       <div className="card p-7">
         <h1 className="text-3xl font-black">
-          Admin · Certificados
+          Admin · Constancias
         </h1>
 
         <p className="text-slate-600 mt-3">
-          Consulta y administra los certificados emitidos en CHRVM Cursos.
+          Consulta y administra las constancias emitidas en CHRVM Cursos.
         </p>
 
         {loading && (
           <div className="mt-8 border border-slate-200 rounded-2xl p-8 text-center">
             <p className="text-slate-500">
-              Cargando certificados...
+              Cargando constancias...
             </p>
           </div>
         )}
@@ -132,7 +132,7 @@ function CertificatesAdminContent() {
         {error && (
           <div className="mt-8 border border-red-200 bg-red-50 rounded-2xl p-6">
             <h2 className="font-bold text-red-700">
-              No se pudieron cargar los certificados
+              No se pudieron cargar las constancias
             </h2>
 
             <p className="text-red-600 mt-2 text-sm">
@@ -146,11 +146,11 @@ function CertificatesAdminContent() {
             <div className="text-5xl">🏆</div>
 
             <h2 className="text-xl font-bold mt-4">
-              No hay certificados emitidos
+              No hay constancias emitidas
             </h2>
 
             <p className="text-slate-500 mt-2">
-              Los certificados generados por los alumnos aparecerán aquí.
+              Las constancias generadas por los alumnos aparecerán aquí.
             </p>
           </div>
         )}

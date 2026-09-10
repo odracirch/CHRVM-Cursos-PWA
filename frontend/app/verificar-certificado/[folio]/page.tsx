@@ -50,7 +50,7 @@ export default function Verify() {
 
       if (error) {
         console.error(
-          'Error verificando certificado:',
+          'Error verificando constancia:',
           error
         )
         setCertificate(null)
@@ -104,7 +104,7 @@ export default function Verify() {
       <div className="max-w-xl mx-auto px-4 py-14">
         <div className="card p-8 text-center">
           <p className="text-slate-600">
-            Verificando certificado...
+            Verificando constancia...
           </p>
         </div>
       </div>
@@ -122,7 +122,7 @@ export default function Verify() {
             </div>
 
             <h1 className="text-3xl font-black mt-3">
-              Certificado válido
+              Constancia válida
             </h1>
 
             <p className="mt-5">
@@ -155,7 +155,7 @@ export default function Verify() {
             </div>
 
             <h1 className="text-2xl font-black mt-3">
-              Certificado no encontrado
+              Constancia no encontrada
             </h1>
 
             <p className="text-slate-500 mt-2">

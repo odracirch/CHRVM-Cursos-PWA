@@ -188,7 +188,7 @@ export default function Dashboard() {
               href="/certificados"
               className="font-semibold text-blue-600"
             >
-              🏆 Mis certificados →
+              🏆 Mis constancias →
             </Link>
           </div>
 

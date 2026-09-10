@@ -167,11 +167,11 @@ function CertificadosContent() {
     <main className="max-w-6xl mx-auto px-4 py-10">
       <div>
         <h1 className="text-3xl font-black">
-          Solicitudes de certificados
+          Solicitudes de constancias
         </h1>
 
         <p className="text-slate-600 mt-2">
-          Gestiona las solicitudes de certificados de tus alumnos.
+          Gestiona las solicitudes de constancias de tus alumnos.
         </p>
       </div>
 
@@ -206,7 +206,7 @@ function CertificadosContent() {
           </h2>
 
           <p className="text-slate-500 mt-2">
-            Cuando un alumno solicite su certificado,
+            Cuando un alumno solicite su constancia,
             aparecerá aquí.
           </p>
         </div>
@@ -272,7 +272,7 @@ function CertificadosContent() {
                       </>
                     ) : (
                       <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-4 py-2 text-sm font-bold">
-                        ✅ Certificado enviado
+                        ✅ Constancia enviada
                       </span>
                     )}
                   </div>

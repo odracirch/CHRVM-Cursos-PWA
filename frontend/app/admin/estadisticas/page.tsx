@@ -253,7 +253,7 @@ function StatisticsContent() {
               <div className="border border-slate-200 rounded-2xl p-5">
                 <div className="text-3xl">🏆</div>
                 <p className="text-sm text-slate-500 mt-3">
-                  Certificados
+                  Constancias
                 </p>
                 <p className="text-3xl font-black mt-1">
                   {stats.certificates}

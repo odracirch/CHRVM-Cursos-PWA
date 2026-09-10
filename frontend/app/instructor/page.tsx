@@ -97,7 +97,7 @@ export default function Page() {
             href="/instructor/certificados"
             className="card p-6 hover:border-blue-300 transition"
           >
-            <h2 className="text-xl font-bold">📜 Solicitudes de certificados</h2>
+            <h2 className="text-xl font-bold">📜 Solicitudes de constancias</h2>
             <p className="text-slate-500 mt-2">
               Revisa y gestiona las solicitudes de tus alumnos.
             </p>

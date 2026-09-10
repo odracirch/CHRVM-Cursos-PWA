@@ -32,8 +32,8 @@ const adminSections = [
   },
   {
     href: '/admin/certificados',
-    title: 'Certificados',
-    description: 'Consulta y administra certificados emitidos.',
+    title: 'Constancias',
+    description: 'Consulta y administra constancias emitidas.',
     icon: '🎓',
   },
   {

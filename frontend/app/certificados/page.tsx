@@ -124,7 +124,7 @@ function CertificatesContent() {
       setError(
         err instanceof Error
           ? err.message
-          : 'No se pudieron cargar tus certificados.'
+          : 'No se pudieron cargar tus constancias.'
       )
     } finally {
       setLoading(false)
@@ -157,7 +157,7 @@ function CertificatesContent() {
 
       if (!user) {
         throw new Error(
-          'Debes iniciar sesión para solicitar el certificado.'
+          'Debes iniciar sesión para solicitar la constancia.'
         )
       }
 
@@ -197,18 +197,18 @@ function CertificatesContent() {
 
       <div className="mt-6">
         <h1 className="text-4xl font-black">
-          Mis certificados
+          Mis constancias
         </h1>
 
         <p className="text-slate-600 mt-2">
-          Consulta tus certificados de los cursos completados.
+          Consulta tus constancias de los cursos completados.
         </p>
       </div>
 
       {loading && (
         <div className="mt-10 border border-slate-200 rounded-2xl p-8 text-center">
           <p className="text-slate-500">
-            Cargando tus certificados...
+            Cargando tus constancias...
           </p>
         </div>
       )}
@@ -232,11 +232,11 @@ function CertificatesContent() {
           </div>
 
           <h2 className="text-2xl font-bold mt-4">
-            Todavía no tienes certificados
+            Todavía no tienes constancias
           </h2>
 
           <p className="text-slate-500 mt-2">
-            Completa un curso al 100% para obtener tu certificado.
+            Completa un curso al 100% para obtener tu constancia.
           </p>
 
           <Link
@@ -315,7 +315,7 @@ function CertificatesContent() {
                     {!request && (
                       <>
                         <p className="text-sm text-slate-500 mb-3">
-                          Certificado pendiente de solicitud.
+                          Constancia pendiente de solicitud.
                         </p>
 
                         <button
@@ -328,7 +328,7 @@ function CertificatesContent() {
                         >
                           {requestingId === certificate.id
                             ? 'Enviando solicitud...'
-                            : '📩 Solicitar certificado'}
+                            : '📩 Solicitar constancia'}
                         </button>
                       </>
                     )}
@@ -340,7 +340,7 @@ function CertificatesContent() {
                         </p>
 
                         <p className="text-amber-600 text-sm mt-1">
-                          Tu instructor está preparando tu certificado.
+                          Tu instructor está preparando tu constancia.
                         </p>
                       </div>
                     )}
@@ -348,11 +348,11 @@ function CertificatesContent() {
                     {request?.status === 'sent' && (
                       <div className="border border-green-200 bg-green-50 rounded-xl p-4">
                         <p className="text-green-700 font-semibold">
-                          ✅ Certificado enviado
+                          ✅ Constancia enviada
                         </p>
 
                         <p className="text-green-600 text-sm mt-1">
-                          Tu instructor ha marcado tu certificado como enviado.
+                          Tu instructor ha marcado tu constancia como enviada.
                         </p>
                       </div>
                     )}
@@ -363,7 +363,7 @@ function CertificatesContent() {
                       href={`/verificar-certificado/${certificate.folio}`}
                       className="block text-center border border-slate-300 hover:bg-slate-50 px-4 py-3 rounded-xl font-semibold"
                     >
-                      🔎 Verificar certificado
+                      🔎 Verificar constancia
                     </Link>
                   </div>
                 </div>

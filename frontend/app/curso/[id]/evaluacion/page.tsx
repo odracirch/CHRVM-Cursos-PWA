@@ -297,7 +297,7 @@ function EvaluationContent() {
                 href="/certificados"
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
               >
-                🏆 Ver mi certificado
+                🏆 Ver mi constancia
               </Link>
             )}
 
